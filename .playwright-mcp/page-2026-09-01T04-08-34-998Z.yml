@@ -1,0 +1,77 @@
+- generic [ref=f4e2]:
+  - banner [ref=f4e3]:
+    - generic [ref=f4e4]:
+      - 'heading "Informe Auditoría PUI: ETTC" [level=1] [ref=f4e5]'
+      - paragraph [ref=f4e6]: ENERTOTAL S.A. E.S.P. — Dashboard Interactivo de Series de Tiempo (PUI, Cobertura en Contratos, Exposición a Bolsa y Flujo de Caja)
+    - generic [ref=f4e7]:
+      - generic [ref=f4e8]: "Rol: CNIOR"
+      - generic [ref=f4e9]: TimesFM Daily Forecast
+  - generic [ref=f4e10]:
+    - button "📊 Dashboard Ejecutivo Interactivo" [ref=f4e11] [cursor=pointer]
+    - button "🧠 Metodología & Cobertura CREG" [ref=f4e12] [cursor=pointer]
+    - button "📐 Matriz Auditoría Fórmulas" [ref=f4e13] [cursor=pointer]
+    - button "📋 Dataset Unificado Completo" [ref=f4e14] [cursor=pointer]
+  - generic [ref=f4e15]:
+    - generic [ref=f4e16]:
+      - generic [ref=f4e17]:
+        - generic [ref=f4e18]: Rango Evaluado
+        - generic [ref=f4e19]: 2024-01-01 a 2027-02-28
+      - generic [ref=f4e20]:
+        - generic [ref=f4e21]: Prima Riesgo Cartera (rcpui)
+        - generic [ref=f4e22]: $0.030 / kWh
+      - generic [ref=f4e23]:
+        - generic [ref=f4e24]: Factor Recaudo (FR)
+        - generic [ref=f4e25]: 92.0%
+      - generic [ref=f4e26]:
+        - generic [ref=f4e27]: Esquema PUI
+        - generic [ref=f4e28]: Transitorio (CRPUI)
+      - generic [ref=f4e29]:
+        - generic [ref=f4e30]: Cobertura Contratos / Bolsa
+        - generic [ref=f4e31]: 85.0% Contratos / 15.0% Bolsa
+      - generic [ref=f4e32]:
+        - generic [ref=f4e33]: Motor de Pronóstico
+        - generic [ref=f4e34]: Google TimesFM (Diario)
+      - generic [ref=f4e35]:
+        - generic [ref=f4e36]: CIOR del Sistema
+        - generic [ref=f4e37]: ENEL COLOMBIA S.A. E.S.P.
+    - generic [ref=f4e38]:
+      - generic [ref=f4e39]:
+        - generic [ref=f4e40]: Cobertura de Demanda Agente [kWh]
+        - generic [ref=f4e41]: 1,447,289,351 kWh Contratos
+        - generic [ref=f4e42]: "Exposición Bolsa Spot: 255,404,003 kWh"
+      - generic [ref=f4e43]:
+        - generic [ref=f4e44]: Energía PUI Total Unificada [kWh]
+        - generic [ref=f4e45]: 1,837,330 kWh
+        - generic [ref=f4e46]: "Monto proyectado: $692,354,276.92 COP"
+      - generic [ref=f4e47]:
+        - generic [ref=f4e48]: Egreso por Giros Acumulado al CIOR [COP]
+        - generic [ref=f4e49]: $401,381,561,084.88
+        - generic [ref=f4e50]: Obligación regulada CNIOR
+      - generic [ref=f4e51]:
+        - generic [ref=f4e52]: Flujo Neto de Caja Proyectado [COP]
+        - generic [ref=f4e53]: $-32,110,524,879.00
+        - generic [ref=f4e54]: Diferencia acumulada de recaudo
+      - generic [ref=f4e55]:
+        - generic [ref=f4e56]: Sobrecosto Acumulado Incobrabilidad [COP]
+        - generic [ref=f4e57]: $32,110,524,879.00
+        - generic [ref=f4e58]: "Pérdida promedio: 8.00%"
+    - generic [ref=f4e59]:
+      - generic [ref=f4e62]:
+        - generic [ref=f4e63]: "⚡ Serie Temporal: Cobertura de Demanda (Contratos vs Bolsa Spot)"
+        - generic [ref=f4e64]: Evolución mensual del amparo en contratos bilaterales vs exposición spot [kWh]
+      - generic [ref=f4e69]:
+        - generic [ref=f4e70]: 💰 Evolución de Precios de Contratos (CU) y Cargos PUI
+        - generic [ref=f4e71]: Costo Unitario Prestación (CU), Cargo Transitorio (CRPUI) y Competitivo (CFPUI) [COP/kWh]
+      - generic [ref=f4e76]:
+        - generic [ref=f4e77]: 📈 Asignación PUI, Egreso Giros al CIOR vs Recaudo Efectivo
+        - generic [ref=f4e78]: Impacto entre la asignación de energía PUI y el egreso regulado de caja [COP & kWh]
+      - generic [ref=f4e83]:
+        - generic [ref=f4e84]: 📉 Sobrecosto Acumulado e Impacto en Flujo Neto de Caja
+        - generic [ref=f4e85]: Déficit financiero acumulado por incobrabilidad del recaudo CNIOR [COP]
+    - generic [ref=f4e90]:
+      - generic [ref=f4e91]: 🥧 Concentración de Sobrecostos PUI por Mercado de Comercialización
+      - paragraph [ref=f4e92]: Distribución de pérdidas por cartera entre los principales mercados del MEM colombiano
+  - contentinfo [ref=f4e96]:
+    - text: Generado por el Sistema MVC PUI (Archivos guardados en carpeta
+    - code [ref=f4e97]: output/
+    - text: con Cobertura de Demanda y unidades explícitas) • 360 registros procesados

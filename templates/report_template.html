@@ -44,7 +44,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1900px;
             margin: 0 auto;
         }
 
@@ -238,18 +238,12 @@
         .text-amber { color: var(--accent-amber) !important; }
         .text-teal { color: var(--accent-teal) !important; }
 
-        /* Chart Grid Layout */
+        /* Chart Grid Layout - Full Width Single Column */
         .charts-grid-2x2 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 1.75rem;
             margin-bottom: 2.5rem;
-        }
-
-        @media (max-width: 1100px) {
-            .charts-grid-2x2 {
-                grid-template-columns: 1fr;
-            }
         }
 
         .chart-card {
@@ -286,7 +280,7 @@
         .chart-wrapper {
             position: relative;
             width: 100%;
-            height: 320px;
+            height: 420px;
         }
 
         /* Formula Card & Code Box */
@@ -594,8 +588,8 @@
                         </p>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:center; align-items:center; height:340px;">
-                    <div style="width:100%; max-width:650px; height:320px;">
+                <div style="display:flex; justify-content:center; align-items:center; height:420px;">
+                    <div style="width:100%; max-width:900px; height:400px;">
                         <canvas id="chartMercadosPie"></canvas>
                     </div>
                 </div>
@@ -869,6 +863,16 @@
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.font.family = "'Outfit', sans-serif";
 
+        // Formateador compacto de ejes: evita traslape mostrando millones/miles abreviados
+        const fmtCompact = (v) => {
+            const abs = Math.abs(v);
+            if (abs >= 1e12) return (v / 1e12).toFixed(2) + ' T';
+            if (abs >= 1e9) return (v / 1e9).toFixed(2) + ' MM';
+            if (abs >= 1e6) return (v / 1e6).toFixed(1) + ' M';
+            if (abs >= 1e3) return (v / 1e3).toFixed(0) + ' K';
+            return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+        };
+
         // Chart 1: Cobertura de Demanda (Contratos vs Bolsa Spot vs Demanda Total)
         new Chart(document.getElementById('chartDemandCoverage'), {
             type: 'bar',
@@ -907,8 +911,17 @@
                     tooltip: { mode: 'index', intersect: false }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Energía [kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    }
                 }
             }
         });
@@ -956,20 +969,26 @@
                     tooltip: { mode: 'index', intersect: false }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
                     y: {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'CU [COP/kWh]' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        title: { display: true, text: 'CU [COP/kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
                     },
                     y1: {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'Tarifas PUI [COP/kWh]' },
-                        grid: { drawOnChartArea: false }
+                        title: { display: true, text: 'Tarifas PUI [COP/kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: fmtCompact }
                     }
                 }
             }
@@ -1019,20 +1038,26 @@
                     tooltip: { mode: 'index', intersect: false }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
                     y: {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'PUI [kWh]' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        title: { display: true, text: 'PUI Energía [kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
                     },
                     y1: {
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'Giros y Recaudo [COP]' },
-                        grid: { drawOnChartArea: false }
+                        title: { display: true, text: 'Giros y Recaudo [COP]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: fmtCompact }
                     }
                 }
             }
@@ -1071,8 +1096,17 @@
                     tooltip: { mode: 'index', intersect: false }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'COP', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    }
                 }
             }
         });
@@ -1099,12 +1133,23 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'right' },
+                    title: {
+                        display: true,
+                        text: 'Sobrecosto por Mercado [COP]',
+                        color: '#f3f4f6',
+                        font: { size: 14, weight: 600 }
+                    },
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 14, padding: 14, color: '#9ca3af' }
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let val = context.raw || 0;
-                                return ' ' + context.label + ': $' + val.toLocaleString('es-CO', {maximumFractionDigits: 2}) + ' COP';
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                let pct = ((val / total) * 100).toFixed(1);
+                                return ' ' + context.label + ': $' + val.toLocaleString('es-CO', {maximumFractionDigits: 2}) + ' COP (' + pct + '%)';
                             }
                         }
                     }

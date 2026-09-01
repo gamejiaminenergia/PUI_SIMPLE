@@ -16,6 +16,7 @@ class PUIParameters:
     fecha_inicio: str = "2024-01-01"     # Inicio rango
     fecha_fin: str = "2026-08-27"        # Fin rango
     agente_objetivo: str = "ETTC"        # Código del agente objetivo
+    agentes_benchmark: list = None       # Lista de agentes (config) para comparativa PUI
 
     def validate(self) -> None:
         """Valida que los rangos de parámetros sean matemáticamente correctos."""

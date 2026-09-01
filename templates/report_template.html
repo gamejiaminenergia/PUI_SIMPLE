@@ -578,20 +578,18 @@
                 </div>
             </div>
 
-            <!-- ROW 2: Concentración por Mercado -->
+            <!-- ROW 2: Benchmark Sobrecostos PUI por Agente (Config) -->
             <div class="section-card">
                 <div class="section-header">
                     <div>
-                        <div class="section-title">🥧 Concentración de Sobrecostos PUI por Mercado de Comercialización</div>
+                        <div class="section-title">📊 Benchmark de Sobrecostos PUI por Agente del Mercado</div>
                         <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">
-                            Distribución de pérdidas por cartera entre los principales mercados del MEM colombiano
+                            Comparación del sobrecosto acumulado por incobrabilidad PUI de <strong>{{ kpis.agente_code }}</strong> frente al resto de agentes del config del estudio.
                         </p>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:center; align-items:center; height:420px;">
-                    <div style="width:100%; max-width:900px; height:400px;">
-                        <canvas id="chartMercadosPie"></canvas>
-                    </div>
+                <div style="height:480px;">
+                    <canvas id="chartAgentesBenchmark"></canvas>
                 </div>
             </div>
         </div>
@@ -843,6 +841,7 @@
         // Carga de Datos desde Jinja2 para Chart.js
         const tendencia = {{ kpis.tendencia_mensual | tojson }};
         const topMercados = {{ kpis.top_mercados_sobrecosto | tojson }};
+        const agentesBenchmark = {{ kpis.top_agentes_sobrecosto | tojson }};
 
         const labelsMeses = tendencia.map(d => d.mes.substring(0, 7));
         const dataVR = tendencia.map(d => d.vr_agente_kwh || 0);
@@ -1111,47 +1110,59 @@
             }
         });
 
-        // Chart 5: Doughnut Chart de Mercados
-        const mercadoLabels = topMercados.map(m => m.name || m.code);
-        const mercadoSobrecostos = topMercados.map(m => m.sobrecosto || 0);
+        // Chart 5: Benchmark de Sobrecosto PUI por Agente (Barras)
+        // Eje Y muestra solo las siglas (código) del agente para mayor claridad
+        const agenteLabels = agentesBenchmark.map(a => a.code);
+        const agenteSobrecostos = agentesBenchmark.map(a => a.sobrecosto || 0);
+        const agenteColores = agentesBenchmark.map(a => a.es_actual ? '#8b5cf6' : 'rgba(59, 130, 246, 0.55)');
+        const agenteBorders = agentesBenchmark.map(a => a.es_actual ? '#a78bfa' : '#3b82f6');
 
-        new Chart(document.getElementById('chartMercadosPie'), {
-            type: 'doughnut',
+        // Ordenar barras asc por sobrecosto para que la más grande quede mejor posicionada en eje vertical
+        const idxSorted = agenteSobrecostos.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v).map(x => x.i);
+        const sortedLabels = idxSorted.map(i => agenteLabels[i]);
+        const sortedData = idxSorted.map(i => agenteSobrecostos[i]);
+        const sortedColors = idxSorted.map(i => agenteColores[i]);
+        const sortedBorders = idxSorted.map(i => agenteBorders[i]);
+
+        new Chart(document.getElementById('chartAgentesBenchmark'), {
+            type: 'bar',
             data: {
-                labels: mercadoLabels,
+                labels: sortedLabels,
                 datasets: [{
-                    data: mercadoSobrecostos,
-                    backgroundColor: [
-                        '#ef4444', '#f59e0b', '#3b82f6', '#10b981',
-                        '#8b5cf6', '#14b8a6', '#ec4899', '#6366f1'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#0a0e17'
+                    label: 'Sobrecosto Acumulado Incobrabilidad PUI [COP]',
+                    data: sortedData,
+                    backgroundColor: sortedColors,
+                    borderColor: sortedBorders,
+                    borderWidth: 1.5,
+                    borderRadius: 4
                 }]
             },
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    title: {
-                        display: true,
-                        text: 'Sobrecosto por Mercado [COP]',
-                        color: '#f3f4f6',
-                        font: { size: 14, weight: 600 }
-                    },
-                    legend: {
-                        position: 'right',
-                        labels: { boxWidth: 14, padding: 14, color: '#9ca3af' }
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let val = context.raw || 0;
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0) || 1;
-                                let pct = ((val / total) * 100).toFixed(1);
-                                return ' ' + context.label + ': $' + val.toLocaleString('es-CO', {maximumFractionDigits: 2}) + ' COP (' + pct + '%)';
+                                return ' $' + val.toLocaleString('es-CO', {maximumFractionDigits: 0}) + ' COP';
                             }
                         }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Sobrecosto Incobrabilidad PUI [COP]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    },
+                    y: {
+                        title: { display: true, text: 'Agente Comercializador', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, autoSkip: false }
                     }
                 }
             }

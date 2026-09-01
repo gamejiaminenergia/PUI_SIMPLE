@@ -26,6 +26,21 @@ AGENTE_NOMBRES = {
     "EPMC": "EPM S.A. E.S.P."
 }
 
+def _demanda_factor(code: str) -> float:
+    """
+    Factor determinístico de participación de demanda del agente en el sistema.
+    Derivado del hash del código para que CADA agente tenga una demanda/sobrecosto
+    distinto y realista (rango típico de comercializadores del MEM: 0.5% - 15%).
+    Esto permite comparar de forma significativa el PUI/sobrecosto entre agentes.
+    """
+    h = 0
+    for ch in str(code):
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    # Normaliza a un factor entre 0.005 (0.5%) y 0.15 (15%)
+    norm = (h % 1000) / 1000.0  # 0.0 - 0.999
+    factor = 0.005 + (norm * 0.145)  # 0.5% a 15%
+    return round(factor, 6)
+
 def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
     """
     Genera un conjunto de datos sintéticos calculado rigurosamente según
@@ -49,6 +64,10 @@ def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
     agente_name = AGENTE_NOMBRES.get(agente_target, f"{agente_target} S.A. E.S.P.")
     rol_pui = "CIOR" if agente_target == cior_code else "CNIOR"
 
+    # Factor de participación de demanda del agente (diferenciado por agente)
+    demanda_factor = _demanda_factor(agente_target)
+    vr_cior_base = 525000000.0
+
     pct_contratos = getattr(params, "pct_cobertura_contratos", 0.85)
     pct_bolsa = 1.0 - pct_contratos
 
@@ -60,7 +79,8 @@ def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
 
         vr_total_todos_agentes = 1500000000.0 + (month_idx * 10000000.0)
         vr_total_cniors = vr_total_todos_agentes * 0.65
-        vr_target_mes = 25000000.0 + (month_idx * 200000.0) if rol_pui == "CNIOR" else 525000000.0
+        # Demanda del agente objetivo: diferenciada por factor determinístico por agente
+        vr_target_mes = vr_total_todos_agentes * demanda_factor if rol_pui == "CNIOR" else vr_cior_base
 
         for m in MERCADOS:
             m_code = m["code"]

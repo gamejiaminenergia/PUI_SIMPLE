@@ -42,7 +42,8 @@ class PUIForecastModel:
             pct_cobertura_contratos=float(pui_cfg.get("pct_cobertura_contratos", 0.85)),
             fecha_inicio=str(self.config.get("train_start_date", "2024-01-01")),
             fecha_fin=str(self.config.get("prediction_end_date", "2027-02-28")),
-            agente_objetivo=str(self.config.get("agent", "ETTC"))
+            agente_objetivo=str(self.config.get("agent", "ETTC")),
+            agentes_benchmark=list(self.config.get("agents", []))
         )
 
     def generate_daily_and_monthly_forecast(
@@ -84,7 +85,7 @@ class PUIForecastModel:
 
         if daily_forecast_df.empty:
             logger.warning("No se generaron predicciones diarias.")
-            kpis = self.historical_model.calculate_summary_kpis(hist_monthly_data)
+            kpis = self.historical_model.calculate_summary_kpis(hist_monthly_data, params)
             return pd.DataFrame(), hist_monthly_data, kpis
 
         # 3. Aplicar cálculo PUI diario y cobertura sobre las predicciones diarias
@@ -200,7 +201,7 @@ class PUIForecastModel:
         combined_rows.sort(key=lambda x: (x.get('mes', ''), x.get('mercado_code', '')))
 
         # 6. Recalcular KPIs integrados
-        combined_kpis = self.historical_model.calculate_summary_kpis(combined_rows)
+        combined_kpis = self.historical_model.calculate_summary_kpis(combined_rows, params)
         combined_kpis['total_registros_forecast'] = len(forecast_monthly_rows)
         combined_kpis['dias_pronosticados'] = len(daily_forecast_df['fecha'].unique()) if not daily_forecast_df.empty else 0
 

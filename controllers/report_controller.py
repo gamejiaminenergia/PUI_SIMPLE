@@ -112,7 +112,7 @@ class ReportController:
             for r in raw_data:
                 r["tipo_registro"] = "HISTORICO"
                 r["es_pronostico"] = False
-            kpis = self.model.calculate_summary_kpis(raw_data)
+            kpis = self.model.calculate_summary_kpis(raw_data, params)
             daily_df = pd.DataFrame()
 
         results = {

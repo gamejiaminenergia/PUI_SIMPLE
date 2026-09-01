@@ -31,7 +31,7 @@ class PUIModel:
         from database.mock_data import generate_mock_pui_data
         return generate_mock_pui_data(params)
 
-    def calculate_summary_kpis(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def calculate_summary_kpis(self, data: List[Dict[str, Any]], params: Any = None) -> Dict[str, Any]:
         """
         Calcula indicadores clave de rendimiento (KPIs) y resúmenes ejecutivos
         tanto a nivel global como por mercado y por mes.
@@ -127,6 +127,47 @@ class PUIModel:
 
         sorted_tendencia = sorted(mes_map.values(), key=lambda x: x["mes"])
 
+        # ---- Benchmark por Agente (Config) para Gráfica Comparativa ----
+        # Calcula el sobrecosto/PUI acumulado de cada agente del config para que
+        # el agente del informe pueda compararse contra los demás.
+        benchmark_agentes = getattr(params, "agentes_benchmark", None)
+        top_agentes_sobrecosto = []
+        if benchmark_agentes:
+            import dataclasses
+            from database import mock_data as mock_mod
+            for ag_code in benchmark_agentes:
+                try:
+                    # Copia superficial de params, solo cambiando el agente objetivo
+                    if dataclasses.is_dataclass(params):
+                        ag_params = dataclasses.replace(params, agente_objetivo=ag_code)
+                    else:
+                        ag_params = params
+                        ag_params.agente_objetivo = ag_code
+
+                    ag_rows = mock_mod.generate_mock_pui_data(ag_params)
+                    if not ag_rows:
+                        continue
+
+                    sobrecosto_cop_ag = 0.0
+                    pui_cop_ag = 0.0
+                    for r in ag_rows:
+                        cu_v = float(r.get("precio_prom_contratos_cop_kwh", 0))
+                        sobrecosto_cop_ag += float(r.get("sobrecosto_pui", 0)) * cu_v
+                        pui_cop_ag += float(r.get("pui_dinero_cop", 0))
+
+                    top_agentes_sobrecosto.append({
+                        "code": ag_code,
+                        "name": ag_rows[0].get("agente_name", ag_code),
+                        "sobrecosto": round(sobrecosto_cop_ag, 2),
+                        "pui_cop": round(pui_cop_ag, 2),
+                        "es_actual": (ag_code == agente_code)
+                    })
+                except Exception as e:
+                    logger.warning(f"No se pudo calcular benchmark para agente {ag_code}: {e}")
+
+            # Ordenar desc por sobrecosto; el agente actual se resalta
+            top_agentes_sobrecosto.sort(key=lambda x: x["sobrecosto"], reverse=True)
+
         return {
             "total_registros": len(data),
             "agente_code": agente_code,
@@ -143,5 +184,6 @@ class PUIModel:
             "mercados_analizados": len(mercados_set),
             "meses_analizados": len(meses_set),
             "top_mercados_sobrecosto": sorted_mercados,
-            "tendencia_mensual": sorted_tendencia
+            "tendencia_mensual": sorted_tendencia,
+            "top_agentes_sobrecosto": top_agentes_sobrecosto
         }

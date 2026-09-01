@@ -1,0 +1,184 @@
+        // Chart 3: Asignación PUI vs Giros y Recaudo
+        new Chart(document.getElementById('chartPuiAndCashFlow'), {
+            type: 'bar',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Asignación PUI Energía [kWh]',
+                        data: dataPuiKwh,
+                        backgroundColor: 'rgba(139, 92, 246, 0.5)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Egreso Giro Obligatorio CIOR [COP]',
+                        data: dataEgresoCop,
+                        type: 'line',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Recaudo Real Efectivo [COP]',
+                        data: dataRecaudoCop,
+                        type: 'line',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'PUI Energía [kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Giros y Recaudo [COP]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+
+        // Chart 4: Sobrecosto e Impacto en Flujo Neto de Caja
+        new Chart(document.getElementById('chartSobrecostoFlujo'), {
+            type: 'line',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Sobrecosto Incobrabilidad [COP]',
+                        data: dataSobrecostoCop,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Flujo Neto de Caja PUI [COP]',
+                        data: dataFlujoCop,
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'COP', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+
+        // Chart 5: Benchmark de Sobrecosto PUI por Agente (Barras)
+        // Eje Y muestra solo las siglas (código) del agente para mayor claridad
+        const agenteLabels = agentesBenchmark.map(a => a.code);
+        const agenteSobrecostos = agentesBenchmark.map(a => a.sobrecosto || 0);
+        const agenteColores = agentesBenchmark.map(a => a.es_actual ? '#8b5cf6' : 'rgba(59, 130, 246, 0.55)');
+        const agenteBorders = agentesBenchmark.map(a => a.es_actual ? '#a78bfa' : '#3b82f6');
+
+        // Ordenar barras asc por sobrecosto para que la más grande quede mejor posicionada en eje vertical
+        const idxSorted = agenteSobrecostos.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v).map(x => x.i);
+        const sortedLabels = idxSorted.map(i => agenteLabels[i]);
+        const sortedData = idxSorted.map(i => agenteSobrecostos[i]);
+        const sortedColors = idxSorted.map(i => agenteColores[i]);
+        const sortedBorders = idxSorted.map(i => agenteBorders[i]);
+
+        new Chart(document.getElementById('chartAgentesBenchmark'), {
+            type: 'bar',
+            data: {
+                labels: sortedLabels,
+                datasets: [{
+                    label: 'Sobrecosto Acumulado Incobrabilidad PUI [COP]',
+                    data: sortedData,
+                    backgroundColor: sortedColors,
+                    borderColor: sortedBorders,
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw || 0;
+                                return ' $' + val.toLocaleString('es-CO', {maximumFractionDigits: 0}) + ' COP';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Sobrecosto Incobrabilidad PUI [COP]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    },
+                    y: {
+                        title: { display: true, text: 'Agente Comercializador', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, autoSkip: false }
+                    }
+                }
+            }
+        });

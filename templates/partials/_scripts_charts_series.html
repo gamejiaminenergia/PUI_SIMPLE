@@ -1,0 +1,130 @@
+        new Chart(document.getElementById('chartDemandCoverage'), {
+            type: 'bar',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Energía en Contratos [kWh]',
+                        data: dataContratos,
+                        backgroundColor: '#10b981',
+                        stack: 'cobertura'
+                    },
+                    {
+                        label: 'Exposición Bolsa Spot [kWh]',
+                        data: dataBolsa,
+                        backgroundColor: '#f59e0b',
+                        stack: 'cobertura'
+                    },
+                    {
+                        label: 'Demanda Total Agente (VR) [kWh]',
+                        data: dataVR,
+                        type: 'line',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Energía [kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: Precios de Contratos (CU) y Cargos PUI
+        new Chart(document.getElementById('chartPricesAndTariffs'), {
+            type: 'line',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Costo Unitario CU (PrecPromCont) [COP/kWh]',
+                        data: dataCU,
+                        borderColor: '#14b8a6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Cargo Transitorio CRPUI [COP/kWh]',
+                        data: dataCRPUI,
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2,
+                        borderDash: [4, 4],
+                        fill: false,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Cargo Competitivo CFPUI [COP/kWh]',
+                        data: dataCFPUI,
+                        borderColor: '#f59e0b',
+                        borderWidth: 2,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#9ca3af', font: { weight: 600 } },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'CU [COP/kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Tarifas PUI [COP/kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { drawOnChartArea: false },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+

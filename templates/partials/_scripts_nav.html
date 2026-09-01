@@ -1,0 +1,37 @@
+        // Navegación por pestañas
+        function switchTab(tabId) {
+            var tabs = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            var btns = document.getElementsByClassName("tab-btn");
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].classList.remove("active");
+            }
+            document.getElementById(tabId).classList.add("active");
+            event.currentTarget.classList.add("active");
+        }
+
+        // Filtros de tablas
+        function filterTable() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toUpperCase();
+            var table = document.getElementById("puiTable");
+            var tr = table.getElementsByTagName("tr");
+            for (var i = 1; i < tr.length; i++) {
+                var text = tr[i].textContent || tr[i].innerText;
+                tr[i].style.display = (text.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+            }
+        }
+
+        function filterAuditTable() {
+            var input = document.getElementById("searchAudit");
+            var filter = input.value.toUpperCase();
+            var table = document.getElementById("auditTable");
+            var tr = table.getElementsByTagName("tr");
+            for (var i = 1; i < tr.length; i++) {
+                var text = tr[i].textContent || tr[i].innerText;
+                tr[i].style.display = (text.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+            }
+        }
+

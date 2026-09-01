@@ -25,10 +25,11 @@ class HTMLReportView(BaseReportView):
         kpis_json = json.dumps(kpis, default=str)
 
         try:
-            from jinja2 import Template
-            with open(self.template_path, "r", encoding="utf-8") as f:
-                template_content = f.read()
-            template = Template(template_content)
+            from jinja2 import Environment, FileSystemLoader
+            template_dir = os.path.dirname(os.path.abspath(self.template_path))
+            template_name = os.path.basename(self.template_path)
+            env = Environment(loader=FileSystemLoader(template_dir))
+            template = env.get_template(template_name)
             rendered_html = template.render(data=data, kpis=kpis, kpis_json=kpis_json, params=params)
         except ImportError:
             rendered_html = self._render_fallback(kpis, params)

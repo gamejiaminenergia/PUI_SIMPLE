@@ -1,0 +1,131 @@
+- generic [ref=f15e2]:
+  - banner [ref=f15e3]:
+    - generic [ref=f15e4]:
+      - 'heading "Informe Auditoría PUI: TEST" [level=1] [ref=f15e5]'
+      - paragraph [ref=f15e6]: TEST S.A. E.S.P. — Dashboard Interactivo de Series de Tiempo (PUI, Cobertura en Contratos, Exposición a Bolsa y Flujo de Caja)
+    - generic [ref=f15e7]:
+      - generic [ref=f15e8]: "Rol: CNIOR"
+      - generic [ref=f15e9]: TimesFM Daily Forecast
+  - generic [ref=f15e10]:
+    - button "📊 Dashboard Ejecutivo Interactivo" [ref=f15e11] [cursor=pointer]
+    - button "🧠 Metodología & Cobertura CREG" [ref=f15e12] [cursor=pointer]
+    - button "📐 Matriz Auditoría Fórmulas" [ref=f15e13] [cursor=pointer]
+    - button "📋 Dataset Unificado Completo" [ref=f15e14] [cursor=pointer]
+  - generic [ref=f15e15]:
+    - generic [ref=f15e16]:
+      - generic [ref=f15e17]:
+        - generic [ref=f15e18]: Rango Evaluado
+        - generic [ref=f15e19]: 2024-01-01 a 2027-02-28
+      - generic [ref=f15e20]:
+        - generic [ref=f15e21]: Prima Riesgo Cartera (rcpui)
+        - generic [ref=f15e22]: $0.030 / kWh
+      - generic [ref=f15e23]:
+        - generic [ref=f15e24]: Factor Recaudo (FR)
+        - generic [ref=f15e25]: 92.0%
+      - generic [ref=f15e26]:
+        - generic [ref=f15e27]: Esquema PUI
+        - generic [ref=f15e28]: Transitorio (CRPUI)
+      - generic [ref=f15e29]:
+        - generic [ref=f15e30]: Cobertura Contratos / Bolsa
+        - generic [ref=f15e31]: 85.0% Contratos / 15.0% Bolsa
+      - generic [ref=f15e32]:
+        - generic [ref=f15e33]: Motor de Pronóstico
+        - generic [ref=f15e34]: Google TimesFM (Diario)
+      - generic [ref=f15e35]:
+        - generic [ref=f15e36]: CIOR del Sistema
+        - generic [ref=f15e37]: ENEL COLOMBIA S.A. E.S.P.
+    - generic [ref=f15e38]:
+      - generic [ref=f15e39]:
+        - generic [ref=f15e40]: Cobertura de Demanda Agente
+        - generic [ref=f15e41]: 4,028.1 GWh Contratos
+        - generic [ref=f15e42]: "Exposición Bolsa Spot: 710.8 GWh"
+      - generic [ref=f15e43]:
+        - generic [ref=f15e44]: Energía PUI Total Unificada
+        - generic [ref=f15e45]: 1.84 GWh
+        - generic [ref=f15e46]: "Monto proyectado: $693.5 MM COP"
+      - generic [ref=f15e47]:
+        - generic [ref=f15e48]: Egreso por Giros Acumulado al CIOR
+        - generic [ref=f15e49]: $401,488.3 MM COP
+        - generic [ref=f15e50]: Obligación regulada CNIOR
+      - generic [ref=f15e51]:
+        - generic [ref=f15e52]: Flujo Neto de Caja Proyectado
+        - generic [ref=f15e53]: $-32,119.1 MM COP
+        - generic [ref=f15e54]: Diferencia acumulada de recaudo
+      - generic [ref=f15e55]:
+        - generic [ref=f15e56]: Sobrecosto Acumulado Incobrabilidad
+        - generic [ref=f15e57]: $32,119.1 MM COP
+        - generic [ref=f15e58]: "Pérdida promedio: 8.00%"
+    - generic [ref=f15e59]:
+      - generic [ref=f15e60]:
+        - generic [ref=f15e62]:
+          - generic [ref=f15e63]: "⚡ Serie Temporal: Cobertura de Demanda (Contratos vs Bolsa Spot)"
+          - generic [ref=f15e64]: Evolución mensual del amparo en contratos bilaterales vs exposición spot [kWh]
+        - paragraph [ref=f15e65]:
+          - strong [ref=f15e66]: ¿Qué muestra esta gráfica?
+          - text: "Cada mes, la energía que el agente vende se consigue de dos fuentes: comprándola a través de"
+          - strong [ref=f15e67]: contratos bilaterales
+          - text: (barras verdes) o comprándola en la
+          - strong [ref=f15e68]: bolsa de energía
+          - text: (barras amarillas, donde el precio es más variable). La línea azul indica el
+          - strong [ref=f15e69]: total de la demanda
+          - text: . Mientras más verde y menos amarillo se vea, más protegido está el agente contra los cambios de precio de la bolsa. Entre mayor sea la cobertura por contratos, más estable y previsible es su costo.
+      - generic [ref=f15e72]:
+        - generic [ref=f15e74]:
+          - generic [ref=f15e75]: 💰 Evolución de Precios de Contratos (CU) y Cargos PUI
+          - generic [ref=f15e76]: Costo Unitario Prestación (CU), Cargo Transitorio (CRPUI) y Competitivo (CFPUI) [COP/kWh]
+        - paragraph [ref=f15e77]:
+          - strong [ref=f15e78]: ¿Qué muestra esta gráfica?
+          - text: La línea verde (CU) es el
+          - strong [ref=f15e79]: precio promedio
+          - text: al que el agente compra la energía mediante sus contratos por cada kilovatio-hora. Las líneas punteadas son los
+          - strong [ref=f15e80]: cargos regulatorios del PUI
+          - text: "(CRPUI o CFPUI): un valor adicional que el agente debe cobrar a sus clientes por kilovatio-hora para cubrir el riesgo de impago del mecanismo. En términos sencillos: el CU es lo que cuesta comprar la energía, y los cargos PUI son el «seguro» adicional regulado que se traslada a los usuarios. Si el CU sube, sube el costo base del servicio."
+      - generic [ref=f15e83]:
+        - generic [ref=f15e85]:
+          - generic [ref=f15e86]: 📈 Asignación PUI, Egreso Giros al CIOR vs Recaudo Efectivo
+          - generic [ref=f15e87]: Impacto entre la asignación de energía PUI y el egreso regulado de caja [COP & kWh]
+        - paragraph [ref=f15e88]:
+          - strong [ref=f15e89]: ¿Qué muestra esta gráfica?
+          - text: El
+          - strong [ref=f15e90]: PUI
+          - text: (Pago por Uso de Interconexión) es un mecanismo por el cual algunos comercializadores recogen dinero de sus clientes para
+          - strong [ref=f15e91]: compensar a la red de transporte
+          - text: por la energía que circula en zonas de difícil acceso. Las barras púrpuras son el valor de esa asignación, y las líneas muestran lo que el agente está
+          - strong [ref=f15e92]: obligado a girar
+          - text: al operador (rojo) frente a lo que
+          - strong [ref=f15e93]: efectivamente logra recaudar
+          - text: de sus clientes (verde). Cuando la línea verde está debajo de la roja, el agente recauda menos de lo que debe girar, generando un faltante de caja.
+      - generic [ref=f15e96]:
+        - generic [ref=f15e98]:
+          - generic [ref=f15e99]: 📉 Sobrecosto Acumulado e Impacto en Flujo Neto de Caja
+          - generic [ref=f15e100]: Déficit financiero acumulado por incobrabilidad del recaudo CNIOR [COP]
+        - paragraph [ref=f15e101]:
+          - strong [ref=f15e102]: ¿Qué muestra esta gráfica?
+          - text: El
+          - strong [ref=f15e103]: sobrecosto
+          - text: (línea roja) es el dinero que el agente
+          - strong [ref=f15e104]: no logra recuperar
+          - text: de sus clientes del PUI, aunque esté obligado a girarlo al operador de red. Es dinero que sale de su caja sin que entre. La línea azul es el
+          - strong [ref=f15e105]: flujo neto de caja
+          - text: ": lo que recauda menos lo que debe girar. Si la línea azul está por debajo de cero (zona negativa), el agente está perdiendo dinero mes a mes por este mecanismo. El área roja sombreada indica la pérdida acumulada total."
+    - generic [ref=f15e108]:
+      - generic [ref=f15e110]:
+        - generic [ref=f15e111]: 📊 Benchmark de Sobrecostos PUI por Agente del Mercado
+        - paragraph [ref=f15e112]:
+          - text: Comparación del sobrecosto acumulado por incobrabilidad PUI de
+          - strong [ref=f15e113]: TEST
+          - text: frente al resto de agentes del config del estudio.
+      - paragraph [ref=f15e114]:
+        - strong [ref=f15e115]: ¿Qué muestra esta gráfica?
+        - text: Cada barra representa un agente comercializador del sistema. La
+        - strong [ref=f15e116]: barra morada
+        - text: es
+        - strong [ref=f15e117]: TEST
+        - text: (este informe), y las barras azules son los demás agentes. El sobrecosto es la pérdida acumulada por no poder cobrar el PUI a los clientes. Una barra más alta indica mayor pérdida financiera relativa. Sirve para
+        - strong [ref=f15e118]: comparar la posición del agente frente a sus pares
+        - text: e identificar si su exposición al riesgo de impago es mayor o menor que la del mercado.
+  - text: V R a g e n t e = E n e r g a C o n t r a t o s [ k W h ] + E n e r g a B o l s a S p o t [ k W h ] % C o b e r t u r a C o n t r a t o s = ( E n e r g a C o n t r a t o s V R a g e n t e ) × 1 0 0 % E x p o s i c i n B o l s a = ( E n e r g a B o l s a V R a g e n t e ) × 1 0 0 V R a g e n t e = ∑ D e m a C o m e R e g [ k W h ] , V R m e r c a d o = ∑ D e m a C o m e [ k W h ] C U m − 1 = P r e c P r o m C o n t m − 1 [ C O P / k W h ] V P U I m − 1 = V R m e r c a d o , m − 1 × % a r e a s _ e s p e c i a l e s [ k W h ] C R P U I u n i t a r i o , m = r c p u i × V P U I m − 1 V R m − 1 × C U m − 1 [ C O P / k W h ] , C F P U I = 0 . 0 2 5 [ C O P / k W h ] E g r e s o _ G i r o C I O R = G i r o m e r c a d o × ( V R C N I O R V R C N I O R s ) [ C O P ] R e c a u d o _ E f e c t i v o = E g r e s o _ G i r o C I O R × F a c t o r _ R e c a u d o [ C O P ] S o b r e c o s t o _ I n c o b r a b i l i d a d = E g r e s o _ G i r o C I O R − R e c a u d o _ E f e c t i v o [ C O P ]
+  - contentinfo [ref=f15e121]:
+    - text: Generado por el Sistema MVC PUI (Archivos guardados en carpeta
+    - code [ref=f15e122]: output/
+    - text: con Cobertura de Demanda y unidades explícitas) • 360 registros procesados

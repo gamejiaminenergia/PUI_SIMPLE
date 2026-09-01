@@ -1,0 +1,46 @@
+        // Auto-ajuste de fórmulas MathJax: escala las fórmulas que exceden el ancho
+        // de su caja contenedora para que quepan sin desbordar ni requerir scroll.
+        (function() {
+            function getMathEl(mjx) {
+                // El ancho REAL de la fórmula está en el <svg> (SVG) o en el <mjx-math> (CHTML)
+                return mjx.querySelector('svg') || mjx.querySelector('mjx-math') || mjx;
+            }
+            function fitFormulas() {
+                document.querySelectorAll('.formula-box').forEach(function(box) {
+                    var mjx = box.querySelector('mjx-container');
+                    if (!mjx) return;
+                    var mathEl = getMathEl(mjx);
+                    if (!mathEl) return;
+                    // Ancho real del contenido de la fórmula
+                    var contentW = mathEl.getBoundingClientRect().width || mathEl.scrollWidth;
+                    var containerW = box.clientWidth - 60;
+                    if (contentW > containerW && contentW > 0) {
+                        var scale = containerW / contentW;
+                        mathEl.style.transform = 'scale(' + scale + ')';
+                        mathEl.style.transformOrigin = 'left center';
+                        mathEl.style.display = mathEl.tagName === 'SVG' ? 'inline-block' : 'block';
+                        // Limitar el ancho del contenedor para que la caja no se desborde
+                        mjx.style.width = containerW + 'px';
+                    }
+                });
+            }
+            function tryFit() {
+                if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                    MathJax.startup.promise.then(fitFormulas);
+                } else {
+                    fitFormulas();
+                }
+            }
+            document.addEventListener('DOMContentLoaded', tryFit);
+            window.addEventListener('load', function() { setTimeout(fitFormulas, 2000); });
+            // Re-ejecutar cuando cambia de pestaña (las fórmulas ocultas no se miden bien)
+            window.__fitFormulas = fitFormulas;
+            var origSwitch = window.switchTab;
+            if (typeof origSwitch === 'function') {
+                window.switchTab = function(tabId) {
+                    var r = origSwitch(tabId);
+                    setTimeout(fitFormulas, 500);
+                    return r;
+                };
+            }
+        })();

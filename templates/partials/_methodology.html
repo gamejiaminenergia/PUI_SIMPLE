@@ -1,0 +1,89 @@
+        <!-- TAB 2: METODOLOGÍA & FÓRMULAS CREG -->
+        <div id="methodology" class="tab-content">
+            <div class="section-card">
+                <div class="section-title" style="margin-bottom:1rem;">🧠 Marco Regulatorio, Cobertura de Demanda y Nombres de Variables BD</div>
+                <p style="color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6;">
+                    El modelo PUI se rige por las resoluciones <strong>CREG 101 de 2012</strong> (Esquema Transitorio) y <strong>CREG 121 de 2016</strong> (Esquema Competitivo). Para auditoría contable y gestión de riesgo del comercializador, se desglosa el balance de cobertura de demanda mensual:
+                </p>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 0:</span> Cobertura de Demanda Agente (Contratos vs Exposición Bolsa Spot)</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Toda demanda comercial regulada atendida por el agente (<code>DemaComeReg</code> / <code>VR_{agente}</code>) debe cubrirse mediante compras en <strong>Contratos Bilaterales</strong> a largo plazo y compras expuestas en la <strong>Bolsa de Energía Spot</strong>:
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        \begin{aligned}
+                        VR_{agente} &= \text{Energía Contratos [kWh]} + \text{Energía Bolsa Spot [kWh]} \\
+                        \% \text{Cobertura Contratos} &= \left(\frac{\text{Energía Contratos}}{VR_{agente}}\right) \times 100 \\
+                        \% \text{Exposición Bolsa} &= \left(\frac{\text{Energía Bolsa}}{VR_{agente}}\right) \times 100
+                        \end{aligned}
+                        \]
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 1:</span> Demanda Comercial Agente (DemaComeReg) y Mercado (DemaCome)</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Variables extraídas de la BD: <code>DemaComeReg</code> (Demanda Comercial Regulada por Agente) y <code>DemaCome</code> (Demanda Comercial Mercado). Ambas expresadas en <strong>Kilovatios Hora [kWh]</strong>.
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        VR_{agente} = \sum DemaComeReg \quad [\text{kWh}], \qquad VR_{mercado} = \sum DemaCome \quad [\text{kWh}]
+                        \]
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 2:</span> Costo Unitario de la Prestación del Servicio (PrecPromCont)</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Precio promedio de los contratos en la base de datos <code>PrecPromCont</code> (o <code>CU</code>), expresado en <strong>COP por Kilovatio Hora [COP/kWh]</strong>.
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        CU_{m-1} = \text{PrecPromCont}_{m-1} \quad [\text{COP/kWh}]
+                        \]
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 3:</span> Evaluación del Volumen de Áreas Especiales (VPUI) con Rezago (m-1)</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Energía en áreas especiales estimada con rezago de 1 mes (<code>m-1</code>) aplicando el % de áreas especiales sobre la demanda del mercado:
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        VPUI_{m-1} = VR_{mercado, m-1} \times \%_{areas\_especiales} \quad [\text{kWh}]
+                        \]
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 4:</span> Cálculo de las Tarifas de Incobrabilidad (CRPUI / CFPUI)</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Tarifa unitaria en esquema transitorio (<code>CRPUI</code>) o competitivo (<code>CFPUI</code>):
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        CRPUI_{unitario, m} = \frac{rcpui \times VPUI_{m-1}}{VR_{m-1} \times CU_{m-1}} \quad [\text{COP/kWh}], \qquad CFPUI = 0.025 \quad [\text{COP/kWh}]
+                        \]
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span>Paso 5:</span> Giros Obligatorios, Recaudo Efectivo y Sobrecosto CNIOR</div>
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">
+                        Obligación regulada de giro al CIOR, recaudo efectivo estimado y sobrecosto resultante por incobrabilidad:
+                    </p>
+                    <div class="formula-box">
+                        \[
+                        \begin{aligned}
+                        Egreso\_Giro_{CIOR} &= Giro_{mercado} \times \left( \frac{VR_{CNIOR}}{VR_{CNIORs}} \right) && [\text{COP}] \\
+                        Recaudo\_Efectivo &= Egreso\_Giro_{CIOR} \times Factor\_Recaudo && [\text{COP}] \\
+                        Sobrecosto\_Incobrabilidad &= Egreso\_Giro_{CIOR} - Recaudo\_Efectivo && [\text{COP}]
+                        \end{aligned}
+                        \]
+                    </div>
+                </div>
+            </div>
+        </div>

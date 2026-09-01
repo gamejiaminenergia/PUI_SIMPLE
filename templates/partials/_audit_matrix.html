@@ -1,0 +1,62 @@
+        <!-- TAB 3: MATRIZ AUDITORÍA DE FÓRMULAS -->
+        <div id="auditMatrix" class="tab-content">
+            <div class="section-card">
+                <div class="section-header">
+                    <div>
+                        <div class="section-title">📐 Matriz de Auditoría de Fórmulas y Cobertura de Demanda (con Unidades)</div>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">
+                            Variables paso a paso (<code>DemaComeReg</code>, Cobertura Contratos, Exposición Bolsa, <code>VR m-1</code>, <code>VPUI m-1</code>, <code>CU m-1</code>, <code>CRPUI</code>, <code>PUI Mercado</code>, <code>Egreso CIOR</code>, <code>Sobrecosto</code>)
+                        </p>
+                    </div>
+                    <input type="text" id="searchAudit" class="search-box" placeholder="Buscar en auditoría..." onkeyup="filterAuditTable()">
+                </div>
+                <div class="table-wrapper">
+                    <table id="auditTable">
+                        <thead>
+                            <tr>
+                                <th>Período (Mes)</th>
+                                <th>Tipo Registro</th>
+                                <th>Mercado</th>
+                                <th>Demanda Agente (VR - DemaComeReg) [kWh]</th>
+                                <th>Cobertura Contratos [kWh]</th>
+                                <th>Exposición Bolsa Spot [kWh]</th>
+                                <th>% Cobertura Contratos [%]</th>
+                                <th>Demanda Mercado Rezago m-1 (VR m-1) [kWh]</th>
+                                <th>Volumen Áreas Esp. Rezago m-1 (VPUI m-1) [kWh]</th>
+                                <th>Costo Unitario Rezago m-1 (CU m-1) [COP/kWh]</th>
+                                <th>Cargo Transitorio Unitario (CRPUI) [COP/kWh]</th>
+                                <th>Egreso Giro Obligatorio CIOR [COP]</th>
+                                <th>Recaudo Real Efectivo Agente [COP]</th>
+                                <th>Sobrecosto Incobrabilidad [COP]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in data %}
+                            <tr>
+                                <td><strong>{{ r.mes[:7] }}</strong></td>
+                                <td>
+                                    {% if r.tipo_registro == 'FORECAST' or r.es_pronostico %}
+                                    <span class="tag-forecast">FORECAST</span>
+                                    {% else %}
+                                    <span class="tag-hist">HISTÓRICO</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ r.mercado_code }}</strong></td>
+                                <td>{{ "{:,.2f}".format(r.vr_agente_kwh or 0) }}</td>
+                                <td><span class="tag-coverage">{{ "{:,.2f}".format(r.energia_contratos_kwh or ((r.vr_agente_kwh or 0)*0.85)) }}</span></td>
+                                <td><span class="text-amber">{{ "{:,.2f}".format(r.energia_bolsa_kwh or ((r.vr_agente_kwh or 0)*0.15)) }}</span></td>
+                                <td>{{ "%.1f"|format(r.pct_cobertura_contratos or 85.0) }}%</td>
+                                <td>{{ "{:,.2f}".format(r.vr_mercado_m1_kwh or 0) }}</td>
+                                <td>{{ "{:,.2f}".format(r.vpui_mercado_m1_kwh or 0) }}</td>
+                                <td>${{ "{:,.4f}".format(r.cu_m1_cop_kwh or 0) }}</td>
+                                <td>${{ "%.7f"|format(r.crpui_unitario or 0) }}</td>
+                                <td>${{ "{:,.2f}".format(r.egreso_giro_cior or 0) }}</td>
+                                <td>${{ "{:,.2f}".format(r.recaudo_real_agente or 0) }}</td>
+                                <td class="text-red"><strong>${{ "{:,.2f}".format(r.sobrecosto_pui or 0) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>

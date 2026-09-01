@@ -1,0 +1,152 @@
+        <!-- TAB 1: DASHBOARD EJECUTIVO INTERACTIVO -->
+        <div id="dashboard" class="tab-content active">
+            <!-- Dynamic Parameters -->
+            <div class="params-panel">
+                <div class="param-item">
+                    <label>Rango Evaluado</label>
+                    <span>{{ params.fecha_inicio }} a {{ params.fecha_fin }}</span>
+                </div>
+                <div class="param-item">
+                    <label>Prima Riesgo Cartera (rcpui)</label>
+                    <span>${{ "%.3f"|format(params.rcpui) }} / kWh</span>
+                </div>
+                <div class="param-item">
+                    <label>Factor Recaudo (FR)</label>
+                    <span>{{ "%.1f"|format(params.factor_recaudo_cnior * 100) }}%</span>
+                </div>
+                <div class="param-item">
+                    <label>Esquema PUI</label>
+                    <span>{{ 'Competitivo (CFPUI)' if params.esquema_competitivo else 'Transitorio (CRPUI)' }}</span>
+                </div>
+                <div class="param-item">
+                    <label>Cobertura Contratos / Bolsa</label>
+                    <span class="text-teal">{{ "%.1f"|format((params.pct_cobertura_contratos or 0.85)*100) }}% Contratos / {{ "%.1f"|format((1.0 - (params.pct_cobertura_contratos or 0.85))*100) }}% Bolsa</span>
+                </div>
+                <div class="param-item">
+                    <label>Motor de Pronóstico</label>
+                    <span class="text-purple">Google TimesFM (Diario)</span>
+                </div>
+                <div class="param-item">
+                    <label>CIOR del Sistema</label>
+                    <span>{{ kpis.cior_name }}</span>
+                </div>
+            </div>
+
+            <!-- KPI Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card teal">
+                    <div class="kpi-title">Cobertura de Demanda Agente</div>
+                    <div class="kpi-value text-teal">{{ "{:,.1f}".format((kpis.total_energia_contratos_kwh or (kpis.total_pui_kwh * 0.85)) / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">GWh Contratos</span></div>
+                    <div class="kpi-sub">Exposición Bolsa Spot: {{ "{:,.1f}".format((kpis.total_energia_bolsa_kwh or (kpis.total_pui_kwh * 0.15)) / 1_000_000) }} GWh</div>
+                </div>
+
+                <div class="kpi-card purple">
+                    <div class="kpi-title">Energía PUI Total Unificada</div>
+                    <div class="kpi-value">{{ "{:,.2f}".format(kpis.total_pui_kwh / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">GWh</span></div>
+                    <div class="kpi-sub">Monto proyectado: ${{ "{:,.1f}".format(kpis.total_pui_cop / 1_000_000) }} MM COP</div>
+                </div>
+
+                <div class="kpi-card warning">
+                    <div class="kpi-title">Egreso por Giros Acumulado al CIOR</div>
+                    <div class="kpi-value">${{ "{:,.1f}".format(kpis.total_egreso_giro_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
+                    <div class="kpi-sub">Obligación regulada CNIOR</div>
+                </div>
+
+                <div class="kpi-card danger">
+                    <div class="kpi-title">Flujo Neto de Caja Proyectado</div>
+                    <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.flujo_neto_caja_total_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
+                    <div class="kpi-sub">Diferencia acumulada de recaudo</div>
+                </div>
+
+                <div class="kpi-card danger">
+                    <div class="kpi-title">Sobrecosto Acumulado Incobrabilidad</div>
+                    <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.sobrecosto_total_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
+                    <div class="kpi-sub">Pérdida promedio: {{ "%.2f"|format(kpis.pct_perdida_promedio) }}%</div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE CHARTS SUITE (Chart.js) -->
+            <div class="charts-grid-2x2">
+                <!-- CHART 1: Cobertura de Demanda (Contratos vs Bolsa Spot vs VR Agente) -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">⚡ Serie Temporal: Cobertura de Demanda (Contratos vs Bolsa Spot)</div>
+                            <div class="chart-card-subtitle">Evolución mensual del amparo en contratos bilaterales vs exposición spot [kWh]</div>
+                        </div>
+                    </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> Cada mes, la energía que el agente vende se consigue de dos fuentes: comprándola a través de <strong>contratos bilaterales</strong> (barras verdes) o comprándola en la <strong>bolsa de energía</strong> (barras amarillas, donde el precio es más variable). La línea azul indica el <strong>total de la demanda</strong>. Mientras más verde y menos amarillo se vea, más protegido está el agente contra los cambios de precio de la bolsa. Entre mayor sea la cobertura por contratos, más estable y previsible es su costo.
+                    </p>
+                    <div class="chart-wrapper">
+                        <canvas id="chartDemandCoverage"></canvas>
+                    </div>
+                </div>
+
+                <!-- CHART 2: Evolución de Precios de Contratos y Tarifas PUI -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">💰 Evolución de Precios de Contratos (CU) y Cargos PUI</div>
+                            <div class="chart-card-subtitle">Costo Unitario Prestación (CU), Cargo Transitorio (CRPUI) y Competitivo (CFPUI) [COP/kWh]</div>
+                        </div>
+                    </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> La línea verde (CU) es el <strong>precio promedio</strong> al que el agente compra la energía mediante sus contratos por cada kilovatio-hora. Las líneas punteadas son los <strong>cargos regulatorios del PUI</strong> (CRPUI o CFPUI): un valor adicional que el agente debe cobrar a sus clientes por kilovatio-hora para cubrir el riesgo de impago del mecanismo. En términos sencillos: el CU es lo que cuesta comprar la energía, y los cargos PUI son el «seguro» adicional regulado que se traslada a los usuarios. Si el CU sube, sube el costo base del servicio.
+                    </p>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPricesAndTariffs"></canvas>
+                    </div>
+                </div>
+
+                <!-- CHART 3: Asignación PUI, Giros al CIOR y Recaudo Efectivo -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">📈 Asignación PUI, Egreso Giros al CIOR vs Recaudo Efectivo</div>
+                            <div class="chart-card-subtitle">Impacto entre la asignación de energía PUI y el egreso regulado de caja [COP & kWh]</div>
+                        </div>
+                    </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> El <strong>PUI</strong> (Pago por Uso de Interconexión) es un mecanismo por el cual algunos comercializadores recogen dinero de sus clientes para <strong>compensar a la red de transporte</strong> por la energía que circula en zonas de difícil acceso. Las barras púrpuras son el valor de esa asignación, y las líneas muestran lo que el agente está <strong>obligado a girar</strong> al operador (rojo) frente a lo que <strong>efectivamente logra recaudar</strong> de sus clientes (verde). Cuando la línea verde está debajo de la roja, el agente recauda menos de lo que debe girar, generando un faltante de caja.
+                    </p>
+                    <div class="chart-wrapper">
+                        <canvas id="chartPuiAndCashFlow"></canvas>
+                    </div>
+                </div>
+
+                <!-- CHART 4: Sobrecosto por Incobrabilidad y Flujo Neto de Caja -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">📉 Sobrecosto Acumulado e Impacto en Flujo Neto de Caja</div>
+                            <div class="chart-card-subtitle">Déficit financiero acumulado por incobrabilidad del recaudo CNIOR [COP]</div>
+                        </div>
+                    </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> El <strong>sobrecosto</strong> (línea roja) es el dinero que el agente <strong>no logra recuperar</strong> de sus clientes del PUI, aunque esté obligado a girarlo al operador de red. Es dinero que sale de su caja sin que entre. La línea azul es el <strong>flujo neto de caja</strong>: lo que recauda menos lo que debe girar. Si la línea azul está por debajo de cero (zona negativa), el agente está perdiendo dinero mes a mes por este mecanismo. El área roja sombreada indica la pérdida acumulada total.
+                    </p>
+                    <div class="chart-wrapper">
+                        <canvas id="chartSobrecostoFlujo"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 2: Benchmark Sobrecostos PUI por Agente (Config) -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div>
+                        <div class="section-title">📊 Benchmark de Sobrecostos PUI por Agente del Mercado</div>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">
+                            Comparación del sobrecosto acumulado por incobrabilidad PUI de <strong>{{ kpis.agente_code }}</strong> frente al resto de agentes del config del estudio.
+                        </p>
+                    </div>
+                </div>
+                <p class="chart-explanation" style="margin-bottom:1rem;">
+                    <strong>¿Qué muestra esta gráfica?</strong> Cada barra representa un agente comercializador del sistema. La <strong>barra morada</strong> es <strong>{{ kpis.agente_code }}</strong> (este informe), y las barras azules son los demás agentes. El sobrecosto es la pérdida acumulada por no poder cobrar el PUI a los clientes. Una barra más alta indica mayor pérdida financiera relativa. Sirve para <strong>comparar la posición del agente frente a sus pares</strong> e identificar si su exposición al riesgo de impago es mayor o menor que la del mercado.
+                </p>
+                <div style="height:480px;">
+                    <canvas id="chartAgentesBenchmark"></canvas>
+                </div>
+            </div>
+        </div>

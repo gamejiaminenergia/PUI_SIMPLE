@@ -9,8 +9,8 @@ __pycache__/
 venv/
 ENV/
 
-# Archivos de salida generados
-output/
+# Archivos de salida generados (opcional: descomenta si quieres versionar reportes)
+# output/
 
 # Configuración con posibles datos sensibles
 config/params.yaml
@@ -31,3 +31,7 @@ Thumbs.db
 # Dependencias
 requirements.txt
 pip-tools/
+
+# Variables de entorno
+.env
+.env.local

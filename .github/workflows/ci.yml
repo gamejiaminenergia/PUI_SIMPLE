@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Check Python syntax
+      run: |
+        python -m py_compile main.py
+        python -m py_compile models/*.py
+        python -m py_compile views/*.py
+        python -m py_compile controllers/*.py
+        python -m py_compile database/*.py
+
+    - name: Quick smoke test (single agent)
+      run: |
+        python main.py --agente ASCC --format html --mode historical
+      timeout-minutes: 5
+
+    - name: Verify output structure
+      run: |
+        test -d output/ASCC
+        test -f output/ASCC/pui_report_ASCC_unificado.html
+        test -f output/ASCC/pui_dataset_unificado.csv
+        test -f output/ASCC/pui_auditoria_formulas.csv
+        test -f output/ASCC/pui_resumen_mensual.csv
+        test -f output/ASCC/pui_series_diarias_forecast.csv
+
+    - name: Check HTML contains key elements
+      run: |
+        html_file="output/ASCC/pui_report_ASCC_unificado.html"
+        grep -q "chartDemandCoverage" "$html_file"
+        grep -q "chartPricesAndTariffs" "$html_file"
+        grep -q "chartPuiAndCashFlow" "$html_file"
+        grep -q "chartSobrecostoFlujo" "$html_file"
+        grep -q "chartAgentesBenchmark" "$html_file"
+        grep -q "chart-explanation" "$html_file"
+        grep -q "begin{aligned}" "$html_file"
+        grep -q "forecastStartPlugin" "$html_file"
+        grep -q "MM COP" "$html_file"
+        echo "All checks passed"

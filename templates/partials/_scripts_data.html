@@ -1,0 +1,75 @@
+        // Carga de Datos desde Jinja2 para Chart.js
+        const tendencia = {{ kpis.tendencia_mensual | tojson }};
+        const topMercados = {{ kpis.top_mercados_sobrecosto | tojson }};
+        const agentesBenchmark = {{ kpis.top_agentes_sobrecosto | tojson }};
+
+        const labelsMeses = tendencia.map(d => d.mes.substring(0, 7));
+        const dataVR = tendencia.map(d => d.vr_agente_kwh || 0);
+        const dataContratos = tendencia.map(d => d.energia_contratos_kwh || (d.vr_agente_kwh * 0.85));
+        const dataBolsa = tendencia.map(d => d.energia_bolsa_kwh || (d.vr_agente_kwh * 0.15));
+
+        const dataCU = tendencia.map(d => d.cu_cop_kwh || 0);
+        const dataCRPUI = tendencia.map(d => d.crpui_unitario || 0);
+        const dataCFPUI = tendencia.map(d => d.cfpui_unitario || 0);
+
+        const dataPuiKwh = tendencia.map(d => d.pui_energia_kwh || 0);
+        const dataEgresoCop = tendencia.map(d => d.egreso_cop || 0);
+        const dataRecaudoCop = tendencia.map(d => d.recaudo_cop || 0);
+        const dataFlujoCop = tendencia.map(d => d.flujo_cop || 0);
+        const dataSobrecostoCop = tendencia.map(d => d.sobrecosto_cop || 0);
+
+        // Índice donde comienza el pronóstico (para la línea punteada vertical)
+        const forecastIndex = (function() {
+            const idx = tendencia.findIndex(d => d.es_pronostico);
+            return idx === -1 ? labelsMeses.length : idx;
+        })();
+        // Anotación reutilizable de línea vertical de inicio del forecast (ejes lineales).
+        // Se inyecta por gráfica en el plugin de anotaciones según necesidades.
+
+        // Estilos Globales Chart.js Dark Mode Glassmorphism
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+
+        // Formateador compacto de ejes: evita traslape mostrando millones/miles abreviados
+        const fmtCompact = (v) => {
+            const abs = Math.abs(v);
+            if (abs >= 1e12) return (v / 1e12).toFixed(2) + ' T';
+            if (abs >= 1e9) return (v / 1e9).toFixed(2) + ' MM';
+            if (abs >= 1e6) return (v / 1e6).toFixed(1) + ' M';
+            if (abs >= 1e3) return (v / 1e3).toFixed(0) + ' K';
+            return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+        };
+
+        // Plugin personalizado: dibuja una línea vertical punteada en el índice donde
+        // comienza el pronóstico (forecastIndex) para gráficas con la opción markForecastStart.
+        const forecastStartPlugin = {
+            id: 'forecastStartLine',
+            afterDatasetsDraw(chart, args, opts) {
+                if (!opts.forecastIndex || opts.forecastIndex <= 0) return;
+                const xScale = chart.scales.x;
+                if (!xScale) return;
+                const x = xScale.getPixelForValue(opts.forecastIndex - 0.5);
+                const { ctx, chartArea } = chart;
+                const top = chartArea.top;
+                const bottom = chartArea.bottom;
+
+                ctx.save();
+                ctx.strokeStyle = opts.color || '#f59e0b';
+                ctx.lineWidth = opts.lineWidth || 2;
+                ctx.setLineDash([6, 6]);
+                ctx.beginPath();
+                ctx.moveTo(x, top);
+                ctx.lineTo(x, bottom);
+                ctx.stroke();
+
+                // Etiqueta "Forecast"
+                if (opts.label) {
+                    ctx.fillStyle = opts.color || '#f59e0b';
+                    ctx.font = 'bold 11px Outfit, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(opts.label, x, top + 12);
+                }
+                ctx.restore();
+            }
+        };
+        Chart.register(forecastStartPlugin);

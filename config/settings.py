@@ -4,12 +4,18 @@ Módulo de Configuración para el Sistema MVC de Informes PUI.
 import os
 from dataclasses import dataclass
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 @dataclass
 class DatabaseSettings:
     """Configuración de conexión a PostgreSQL."""
     host: str = os.getenv("DB_HOST", "localhost")
     port: int = int(os.getenv("DB_PORT", "5432"))
-    database: str = os.getenv("DB_NAME", "elecdb")
+    database: str = os.getenv("DB_NAME", "postgres")
     user: str = os.getenv("DB_USER", "postgres")
     password: str = os.getenv("DB_PASSWORD", "postgres")
 

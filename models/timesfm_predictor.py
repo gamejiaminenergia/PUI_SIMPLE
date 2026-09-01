@@ -18,7 +18,7 @@ class TimesFMPredictor:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.model_name = config.get("model", {}).get("name", "google/timesfm-1.0-200m")
+        self.model_name = config.get("model", {}).get("name", "google/timesfm-3.0-pytorch")
         self.context_len = config.get("model", {}).get("context_len", 512)
         self.horizon_len = config.get("model", {}).get("horizon_len", 185)
         self.backend = config.get("model", {}).get("backend", "cpu")
@@ -26,25 +26,80 @@ class TimesFMPredictor:
         self._init_timesfm()
 
     def _init_timesfm(self):
-        """Intenta inicializar el modelo oficial Google TimesFM si la librería está instalada."""
+        """Intenta inicializar el modelo oficial Google TimesFM 3.0 si la librería está instalada."""
         try:
-            import timesfm
-            logger.info(f"Cargando modelo Google TimesFM ({self.model_name})...")
-            self.tfm_model = timesfm.TimesFm(
-                context_len=self.context_len,
-                horizon_len=self.horizon_len,
-                input_patch_len=32,
-                output_patch_len=128,
-                num_layers=20,
-                model_dims=1280,
-                backend=self.backend
+            from timesfm3 import TimesFM3Evaluator, ModelConfig
+            logger.info(f"Cargando modelo Google TimesFM 3.0...")
+            config = ModelConfig(
+                checkpoint_path=self.model_name,
+                per_core_batch_size=32,
+                device=self.backend
             )
-            # Cargar pesos si está configurado
-            # self.tfm_model.load_from_checkpoint(repo_id=self.model_name)
-            logger.info("Modelo TimesFM inicializado exitosamente.")
-        except ImportError:
-            logger.info("Librería 'timesfm' no detectada en el entorno. Se utilizará el motor TimesFM-Statistical Fallback.")
+            self.tfm_model = TimesFM3Evaluator(config)
+            logger.info("Modelo TimesFM 3.0 inicializado exitosamente.")
+        except (ImportError, Exception) as e:
+            logger.info(f"TimesFM 3.0 no disponible ({e}). Se utilizará el motor TimesFM-Statistical Fallback.")
             self.tfm_model = None
+
+    def predict_coverage_series(
+        self,
+        monthly_pct_series,
+        horizon_meses: int
+    ) -> List[float]:
+        """
+        Pronostica la cobertura de contratos (% pct_cobertura_contratos) futura usando
+        TimesFM 3.0 entrenado con el MÁXIMO histórico mensual disponible (2015 -> último mes).
+
+        Args:
+            monthly_pct_series: Serie mensual de cobertura histórica (pd.Series o list),
+                                p. ej. 2015-01 -> 2026-07 (140+ puntos).
+            horizon_meses: Número de meses futuros a pronosticar.
+
+        Returns:
+            List[float] con pct_cobertura_contratos por mes futuro (acotado [0,100]).
+        """
+        values = np.asarray([float(x) for x in monthly_pct_series if x is not None], dtype=float)
+        if len(values) == 0:
+            logger.warning("Sin histórico de cobertura; usando fallback 0.85.")
+            return [85.0] * horizon_meses
+
+        n_future = max(int(horizon_meses), 1)
+
+        if self.tfm_model is not None and self.tfm_model is not False:
+            try:
+                out = self.tfm_model.predict(
+                    context=values,
+                    horizon=n_future,
+                    make_positive=False
+                )
+                raw = np.asarray(out.forecast if hasattr(out, "forecast") else out, dtype=float).flatten()
+                forecast = [float(np.clip(v, 0.0, 100.0)) for v in raw[:n_future]]
+                while len(forecast) < n_future:
+                    forecast.append(forecast[-1] if forecast else values[-1])
+                logger.info(f"Predicción de cobertura con TimesFM 3.0: {[round(v,2) for v in forecast]}")
+                return forecast
+            except Exception as e:
+                logger.warning(f"Error pronosticando cobertura con TimesFM 3.0 ({e}); usando fallback estadístico.")
+
+        # Fallback estadístico: media móvil estacional + tendencia, acotado [0,100]
+        last = float(values[-1])
+        n = len(values)
+        recent_window = values[-(min(24, n)):] if n >= 2 else values
+        base = float(np.mean(recent_window))
+        # Tendencia de los últimos 6 puntos (si hay suficiente histórico)
+        trend = 0.0
+        if n >= 12:
+            half = n // 2
+            m1, m2 = float(np.mean(values[:half])), float(np.mean(values[half:]))
+            # Disminución de tendencia (típico en 2026): cobertura cae hacia la bolsa
+            trend = (m2 - m1) / max(half, 1)
+        forecast = []
+        for i in range(n_future):
+            seasonal = 1.5 * np.sin(2 * np.pi * (n + i) / 12.0)
+            v = base + trend * (i + 1) + seasonal
+            forecast.append(float(np.clip(v, 0.0, 100.0)))
+        logger.info(f"Predicción de cobertura (fallback): {[round(v,2) for v in forecast]}")
+        return forecast
 
     def predict_daily_series(
         self,

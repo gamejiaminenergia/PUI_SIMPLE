@@ -2,6 +2,7 @@
 Modelo de Datos PUI (Histórico / Core).
 Procesa registros y ejecuta cálculos de KPIs para el informe.
 """
+import os
 import logging
 from typing import List, Dict, Any
 from models.pui_parameters import PUIParameters
@@ -16,18 +17,24 @@ class PUIModel:
 
     def get_report_data(self, params: PUIParameters) -> List[Dict[str, Any]]:
         """
-        Obtiene los datos del reporte. Si la conexión a BD está activa consulta PostgreSQL,
-        de lo contrario utiliza el generador sintético (Mock Data).
+        Obtiene los datos del reporte. Si hay conexión a BD, ejecuta la query PUI real
+        (sql/pui_query.sql), que incluye el cálculo REAL de cobertura de contratos.
+        Si la BD no está disponible, usa el motor sintético (Mock Data).
         """
-        if self.db and hasattr(self.db, "execute_query"):
+        if self.db is not None:
+            # Cargar la query PUI real (ampliada con cobertura de demanda)
+            sql_path = os.path.join(os.path.dirname(__file__), "..", "sql", "pui_query.sql")
             try:
-                # Consulta SQL Real contra la BD de 9.2M de registros
-                query = "SELECT * FROM public.fact_hourly_agente LIMIT 100;"
-                return self.db.execute_query(query)
+                with open(sql_path, "r", encoding="utf-8") as f:
+                    query_template = f.read()
+                # execute_pui_query ya hace fallback a mock si la BD falla
+                return self.db.execute_pui_query(query_template, params)
             except Exception as e:
-                logger.warning(f"Error consultando BD PostgreSQL ({e}). Se usará el motor sintético.")
-        
-        # Generación de datos sintéticos según example.sql y CREG 101/2012
+                logger.warning(f"Error ejecutando query real PUI ({e}). Se usará el motor sintético.")
+                from database.mock_data import generate_mock_pui_data
+                return generate_mock_pui_data(params)
+
+        # Sin gestor de BD: motor sintético
         from database.mock_data import generate_mock_pui_data
         return generate_mock_pui_data(params)
 

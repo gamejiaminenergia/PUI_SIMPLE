@@ -41,6 +41,23 @@ def _demanda_factor(code: str) -> float:
     factor = 0.005 + (norm * 0.145)  # 0.5% a 15%
     return round(factor, 6)
 
+
+def _cobertura_contratos_realista(code: str, month_idx: int, total_months: int) -> float:
+    """
+    Genera una cobertura de contratos realista y variable por agente/mes.
+    Simula tendencias observadas en la BD real: ~100% historically, cayendo a 74-88%
+    en meses recientes (2026). Rango acotado [0.55, 1.00].
+    """
+    h = 0
+    for ch in str(code):
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    base = 0.82 + ((h % 180) / 1000.0)  # base 0.82 - 0.99
+    seasonal = 0.02 * math.sin(2 * math.pi * month_idx / 12.0)
+    trend = -0.015 * max(0, (month_idx - total_months * 0.7)) / total_months
+    noise = ((h * 17 + month_idx * 31) % 100 - 50) / 5000.0
+    pct = base + seasonal + trend + noise
+    return max(0.55, min(1.00, pct))
+
 def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
     """
     Genera un conjunto de datos sintéticos calculado rigurosamente según
@@ -68,12 +85,16 @@ def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
     demanda_factor = _demanda_factor(agente_target)
     vr_cior_base = 525000000.0
 
-    pct_contratos = getattr(params, "pct_cobertura_contratos", 0.85)
-    pct_bolsa = 1.0 - pct_contratos
+    # Cobertura por defecto (fallback cuando no hay histórico real)
+    default_pct = getattr(params, "pct_cobertura_contratos", 0.85)
+    total_months = len(months)
 
     rows = []
 
     for month_idx, mes in enumerate(months):
+        # Cobertura de contratos REALISTA por agente/mes (no constante)
+        pct_contratos = _cobertura_contratos_realista(agente_target, month_idx, total_months)
+        pct_bolsa = 1.0 - pct_contratos
         cu = round(280.0 + (month_idx * 2.5) + math.sin(month_idx) * 15, 4)
         cu_m1 = round(280.0 + ((month_idx - 1) * 2.5) + math.sin(max(0, month_idx - 1)) * 15, 4)
 
@@ -149,6 +170,7 @@ def generate_mock_pui_data(params: Any) -> List[Dict[str, Any]]:
                 "energia_bolsa_kwh": energia_bolsa_kwh,
                 "pct_cobertura_contratos": round(pct_contratos * 100.0, 2),
                 "pct_exposicion_bolsa": round(pct_bolsa * 100.0, 2),
+                "modo_cobertura": "calculo_mock",
                 "estado_cobertura": f"Cubierta ({pct_contratos*100:.1f}% Contratos / {pct_bolsa*100:.1f}% Bolsa)",
                 "dias_activos_mes": 30,
                 "promedio_diario_kwh": round(vr_agente_mercado_kwh / 30.0, 2),

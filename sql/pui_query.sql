@@ -100,7 +100,39 @@ totales_mes AS (
     GROUP BY va.mes
 ),
 
--- PASO 6: LAGS Y CRPUI POR MERCADO/MES
+-- PASO 6: COBERTURA DE DEMANDA REAL (Contratos vs Bolsa)
+cobertura_energia AS (
+    SELECT
+        ha.agente_code,
+        date_trunc('month', ha.fecha_hora)::date                            AS mes,
+        SUM(ha."CompContEnerReg")                                           AS energia_contratos_kwh,
+        SUM(COALESCE(ha."CompBolsNaciEner", 0)
+          + COALESCE(ha."CompBolsaIntEner", 0)
+          + COALESCE(ha."CompBolsaTIEEner", 0))                            AS energia_bolsa_kwh,
+        SUM(ha."DemaComeReg")                                               AS vr_total_kwh,
+        CASE
+            WHEN SUM(ha."DemaComeReg") > 0
+            THEN ROUND(100.0 * SUM(ha."CompContEnerReg")::numeric
+                       / NULLIF(SUM(ha."DemaComeReg")::numeric, 0), 2)
+            ELSE NULL
+        END                                                                 AS pct_cobertura_contratos,
+        CASE
+            WHEN SUM(ha."DemaComeReg") > 0
+            THEN ROUND(100.0 * (COALESCE(SUM(COALESCE(ha."CompBolsNaciEner",0)
+                                             +COALESCE(ha."CompBolsaIntEner",0)
+                                             +COALESCE(ha."CompBolsaTIEEner",0)), 0))::numeric
+                       / NULLIF(SUM(ha."DemaComeReg")::numeric, 0), 2)
+            ELSE NULL
+        END                                                                 AS pct_exposicion_bolsa
+    FROM fact_hourly_agente ha
+    CROSS JOIN params p
+    WHERE ha.fecha_hora >= p.fecha_inicio
+      AND ha.fecha_hora <  p.fecha_fin
+      AND ha."DemaComeReg" > 0
+    GROUP BY ha.agente_code, date_trunc('month', ha.fecha_hora)
+),
+
+-- PASO 7: LAGS Y CRPUI POR MERCADO/MES
 mercado_con_lags AS (
     SELECT
         vm.mercado_code,
@@ -183,7 +215,7 @@ totales_giros AS (
     GROUP BY mes
 ),
 
--- PASO 9: PUI DISTRIBUIDO POR AGENTE
+-- PASO 10: PUI DISTRIBUIDO POR AGENTE
 pui_agente AS (
     SELECT
         pm.mercado_code,
@@ -229,11 +261,17 @@ pui_agente AS (
                  AND tm.vr_total_cnior > 0
             THEN pm.recaudo_real_estimado * (va.vr_kwh / tm.vr_total_cnior)
             ELSE 0.0
-        END                                                                 AS recaudo_agente
+        END                                                                 AS recaudo_agente,
+        -- Cobertura de Demanda (datos reales de compra de energía)
+        ce.energia_contratos_kwh,
+        ce.energia_bolsa_kwh,
+        ce.pct_cobertura_contratos,
+        ce.pct_exposicion_bolsa
     FROM pui_mercado pm
     JOIN vr_agente va ON pm.mes = va.mes
     JOIN totales_mes tm ON pm.mes = tm.mes
     LEFT JOIN cior_agent ca ON va.agente_code = ca.cior_code
+    LEFT JOIN cobertura_energia ce ON va.agente_code = ce.agente_code AND pm.mes = ce.mes
     WHERE va.vr_kwh > 0
 ),
 
@@ -321,7 +359,12 @@ SELECT
     p.pct_areas_especiales                                                  AS param_pct_areas_especiales,
     p.factor_recaudo_cnior                                                  AS param_factor_recaudo,
     p.cfpui                                                                 AS param_cfpui,
-    p.esquema_competitivo                                                   AS param_esquema_competitivo
+    p.esquema_competitivo                                                   AS param_esquema_competitivo,
+    -- Cobertura de Demanda (Contratos vs Bolsa) - datos reales
+    ROUND(COALESCE(fa.energia_contratos_kwh, 0)::numeric, 2)              AS energia_contratos_kwh,
+    ROUND(COALESCE(fa.energia_bolsa_kwh, 0)::numeric, 2)                  AS energia_bolsa_kwh,
+    COALESCE(fa.pct_cobertura_contratos, 85.0)                            AS pct_cobertura_contratos,
+    COALESCE(fa.pct_exposicion_bolsa, 15.0)                               AS pct_exposicion_bolsa
 FROM flujo_agente fa
 CROSS JOIN params p
 CROSS JOIN cior_agent cior_info

@@ -12,7 +12,8 @@ class PUIParameters:
     factor_recaudo_cnior: float = 0.92   # 92% recaudo efectivo CNIOR
     cfpui: float = 0.025                 # $/kWh - Costo competitivo fijo
     esquema_competitivo: bool = False    # FALSE = CRPUI transitorio, TRUE = CFPUI competitivo
-    pct_cobertura_contratos: float = 0.85 # 85% Cobertura de demanda por contratos (15% Exposición Bolsa Spot)
+    pct_cobertura_contratos: float = 0.85 # COBERTURA SOLO usada como fallback (cuando la BD no expone CompContEnerReg)
+    derive_cobertura_desde_datos: bool = True  # True = calcular cobertura real desde la BD/mock
     fecha_inicio: str = "2024-01-01"     # Inicio rango
     fecha_fin: str = "2026-08-27"        # Fin rango
     agente_objetivo: str = "ETTC"        # Código del agente objetivo

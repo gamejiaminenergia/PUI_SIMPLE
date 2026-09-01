@@ -28,7 +28,12 @@ class PUIForecastModel:
             self.config = {}
 
         self.timesfm_predictor = TimesFMPredictor(config=self.config)
-        self.historical_model = PUIModel()
+        # Conectar el modelo histórico con el gestor de BD para usar la query real
+        try:
+            from database.connection import DatabaseConnectionManager
+            self.historical_model = PUIModel(db_connection=DatabaseConnectionManager())
+        except Exception:
+            self.historical_model = PUIModel()
 
     def get_forecast_params(self) -> PUIParameters:
         """Crea la instancia de PUIParameters cargando valores del archivo YAML de configuración."""
@@ -40,11 +45,81 @@ class PUIForecastModel:
             cfpui=float(pui_cfg.get("cfpui", 0.025)),
             esquema_competitivo=bool(pui_cfg.get("esquema_competitivo", False)),
             pct_cobertura_contratos=float(pui_cfg.get("pct_cobertura_contratos", 0.85)),
+            derive_cobertura_desde_datos=bool(pui_cfg.get("derive_cobertura_desde_datos", True)),
             fecha_inicio=str(self.config.get("train_start_date", "2024-01-01")),
             fecha_fin=str(self.config.get("prediction_end_date", "2027-02-28")),
             agente_objetivo=str(self.config.get("agent", "ETTC")),
             agentes_benchmark=list(self.config.get("agents", []))
         )
+
+    def _pronosticar_cobertura(
+        self,
+        hist_monthly_data: List[Dict[str, Any]],
+        pred_start: str,
+        pred_end: str
+    ) -> Dict[str, float]:
+        """
+        Construye la serie histórica mensual REAL de pct_cobertura_contratos y la pronostica
+        con TimesFM 3.0 (máximo histórico disponible). Retorna {mes: %cobertura} por mes futuro.
+
+        Si no hay histórico (derive_cobertura_desde_datos=False o sin datos), usa el
+        parámetro de reserva pct_cobertura_contratos como fallback.
+        """
+        from datetime import datetime
+
+        # Obtener los meses del horizonte a pronosticar
+        meses_futuros = []
+        dt = datetime.strptime(pred_start[:10], "%Y-%m-%d")
+        fin = datetime.strptime(pred_end[:10], "%Y-%m-%d")
+        while dt <= fin:
+            key = dt.strftime("%Y-%m-01")
+            if key not in meses_futuros:
+                meses_futuros.append(key)
+            if dt.month == 12:
+                dt = dt.replace(year=dt.year + 1, month=1)
+            else:
+                dt = dt.replace(month=dt.month + 1)
+        horizon = len(meses_futuros)
+
+        # Serie histórica real de cobertura por mes (agregada del histórico)
+        hist_por_mes = {}
+        for r in hist_monthly_data:
+            pct = r.get("pct_cobertura_contratos")
+            if pct is None:
+                continue
+            mes = r.get("mes")
+            if not mes:
+                continue
+            try:
+                v = float(pct)
+            except (TypeError, ValueError):
+                continue
+            # Si es fracción (0-1) convertir a %; si ya es % (posible >1) mantener
+            hist_por_mes[str(mes)[:10]] = v * 100.0 if v <= 1.5 else v
+
+        derive = getattr(self, "config", {}).get("pui_params", {}).get("derive_cobertura_desde_datos", True)
+        if derive and hist_por_mes:
+            # Ordenar serie por mes (2015-01 -> último)
+            serie = pd.Series(dict(sorted(hist_por_mes.items())))
+            pcts = list(serie.values)
+            logger.info(f"Entrenando pronóstico de cobertura con {len(pcts)} meses históricos "
+                        f"(rango {serie.index[0]} -> {serie.index[-1]}).")
+            forecast = self.timesfm_predictor.predict_coverage_series(pcts, horizon)
+        else:
+            fallback_pct = self._pct_fallback()
+            logger.info(f"Sin histórico de cobertura real; usando fallback {fallback_pct}%.")
+            forecast = [fallback_pct] * horizon
+
+        return {m: round(f, 2) for m, f in zip(meses_futuros, forecast)}
+
+    def _pct_fallback(self) -> float:
+        """% de cobertura de reserva (de params.yaml) cuando no hay histórico que derive la cobertura."""
+        default = self.config.get("pui_params", {}).get("pct_cobertura_contratos", 0.85)
+        try:
+            v = float(default)
+            return v * 100.0 if v <= 1.5 else v
+        except (TypeError, ValueError):
+            return 85.0
 
     def generate_daily_and_monthly_forecast(
         self,
@@ -61,9 +136,6 @@ class PUIForecastModel:
         if params is None:
             params = self.get_forecast_params()
 
-        pct_contratos = getattr(params, "pct_cobertura_contratos", 0.85)
-        pct_bolsa = 1.0 - pct_contratos
-
         # 1. Obtener histórico mensual
         hist_monthly_data = self.historical_model.get_report_data(params)
         for r in hist_monthly_data:
@@ -75,6 +147,10 @@ class PUIForecastModel:
         # Configurar fechas del pronóstico futuro
         pred_start = self.config.get("prediction_start_date", "2026-08-28")
         pred_end = self.config.get("prediction_end_date", "2027-02-28")
+
+        # 2a. Pronosticar COBERTURA de contratos (% por mes futuro) con TimesFM 3.0
+        #     usando el máximo histórico mensual real disponible (NO el 0.85 fijo).
+        pct_por_mes = self._pronosticar_cobertura(hist_monthly_data, pred_start, pred_end)
 
         # 2. Generar predicciones diarias con TimesFM
         daily_forecast_df = self.timesfm_predictor.predict_daily_series(
@@ -93,11 +169,19 @@ class PUIForecastModel:
         agente_name = "ENERTOTAL S.A. E.S.P." if agente_code == "ETTC" else f"{agente_code} S.A. E.S.P."
         cior_name = "ENEL COLOMBIA S.A. E.S.P."
 
-        daily_forecast_df['energia_contratos_kwh'] = (daily_forecast_df['vr_agente_kwh'] * pct_contratos).round(2)
-        daily_forecast_df['energia_bolsa_kwh'] = (daily_forecast_df['vr_agente_kwh'] * pct_bolsa).round(2)
-        daily_forecast_df['pct_cobertura_contratos'] = round(pct_contratos * 100.0, 2)
-        daily_forecast_df['pct_exposicion_bolsa'] = round(pct_bolsa * 100.0, 2)
-        daily_forecast_df['estado_cobertura'] = f"Cubierta ({pct_contratos*100:.1f}% Contratos / {pct_bolsa*100:.1f}% Bolsa)"
+        # Cobertura mensual diferenciada por mes (pronóstico TimesFM), no un 0.85 único
+        daily_forecast_df['pct_cobertura_contratos'] = daily_forecast_df['mes'].map(pct_por_mes).fillna(
+            params.pct_cobertura_contratos * 100.0)
+        daily_forecast_df['pct_exposicion_bolsa'] = (100.0 - daily_forecast_df['pct_cobertura_contratos']).round(2)
+        daily_forecast_df['pct_cobertura_contratos'] = daily_forecast_df['pct_cobertura_contratos'].round(2)
+        daily_forecast_df['energia_contratos_kwh'] = (
+            daily_forecast_df['vr_agente_kwh'] * daily_forecast_df['pct_cobertura_contratos'] / 100.0).round(2)
+        daily_forecast_df['energia_bolsa_kwh'] = (
+            daily_forecast_df['vr_agente_kwh'] * daily_forecast_df['pct_exposicion_bolsa'] / 100.0).round(2)
+        daily_forecast_df['estado_cobertura'] = (
+            "Cubierta (" + daily_forecast_df['pct_cobertura_contratos'].round(1).astype(str)
+            + "% Contratos / " + daily_forecast_df['pct_exposicion_bolsa'].round(1).astype(str) + "% Bolsa)")
+        daily_forecast_df['modo_cobertura'] = "pronostico"
 
         daily_forecast_df['pui_energia_kwh'] = daily_forecast_df['vr_agente_kwh'] * 0.003
         daily_forecast_df['pui_dinero_cop'] = daily_forecast_df['pui_energia_kwh'] * daily_forecast_df['precio_prom_contratos_cop_kwh']
@@ -140,8 +224,12 @@ class PUIForecastModel:
         for _, row in monthly_grouped.iterrows():
             m_code = row['mercado_code']
             vr_ag_val = float(row['vr_agente_kwh'])
-            e_cont_val = round(vr_ag_val * pct_contratos, 2)
-            e_bolsa_val = round(vr_ag_val * pct_bolsa, 2)
+            # % cobertura pronosticado para ESTE mes (no un 0.85 global)
+            mes_s = str(row['mes'])
+            this_pct = pct_por_mes.get(mes_s, params.pct_cobertura_contratos * 100.0)
+            this_bolsa = 100.0 - this_pct
+            e_cont_val = round(vr_ag_val * this_pct / 100.0, 2)
+            e_bolsa_val = round(vr_ag_val * this_bolsa / 100.0, 2)
 
             forecast_monthly_rows.append({
                 "agente_code": agente_code,
@@ -155,9 +243,10 @@ class PUIForecastModel:
                 "vr_agente_kwh": round(vr_ag_val, 2),
                 "energia_contratos_kwh": e_cont_val,
                 "energia_bolsa_kwh": e_bolsa_val,
-                "pct_cobertura_contratos": round(pct_contratos * 100.0, 2),
-                "pct_exposicion_bolsa": round(pct_bolsa * 100.0, 2),
-                "estado_cobertura": f"Cubierta ({pct_contratos*100:.1f}% Contratos / {pct_bolsa*100:.1f}% Bolsa)",
+                "pct_cobertura_contratos": round(this_pct, 2),
+                "pct_exposicion_bolsa": round(this_bolsa, 2),
+                "modo_cobertura": "pronostico",
+                "estado_cobertura": f"Cubierta ({this_pct:.1f}% Contratos / {this_bolsa:.1f}% Bolsa)",
                 "dias_activos_mes": 30,
                 "promedio_diario_kwh": round(vr_ag_val / 30.0, 2),
                 "precio_prom_contratos_cop_kwh": round(float(row['precio_prom_contratos_cop_kwh']), 4),

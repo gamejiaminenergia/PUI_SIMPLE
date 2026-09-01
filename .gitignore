@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Entorno virtual
+.venv/
+venv/
+ENV/
+
+# Archivos de salida generados
+output/
+
+# Configuración con posibles datos sensibles
+config/params.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Dependencias
+requirements.txt
+pip-tools/

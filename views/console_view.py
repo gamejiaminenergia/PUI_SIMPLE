@@ -9,6 +9,9 @@ class ConsoleReportView(BaseReportView):
     """Renderiza el informe ejecutivo en la terminal con formato ASCII."""
 
     def render(self, data: List[Dict[str, Any]], kpis: Dict[str, Any], params: PUIParameters, output_path: str = None) -> str:
+        if not kpis:
+            print("[ConsoleView] WARNING: kpis is None or empty, skipping console render.")
+            return "console_skipped_no_kpis"
         es_pronostico = kpis.get("registros_pronosticados", 0) > 0
         titulo_modo = "HISTÓRICO Y PRONÓSTICO (TimesFM)" if es_pronostico else "HISTÓRICO REGULATORIO"
 

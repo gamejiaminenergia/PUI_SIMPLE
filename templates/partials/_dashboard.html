@@ -157,6 +157,9 @@
                         <span class="chart-card-title">📊 Cobertura y Demanda</span>
                         <span class="chart-card-subtitle">Contratos vs Bolsa vs VR Total</span>
                     </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> Cada mes, la energía que el agente vende se consigue de dos fuentes: comprándola a través de <strong>contratos bilaterales</strong> (barras verdes) o comprándola en la <strong>bolsa de energía</strong> (barras amarillas, donde el precio es más variable). La línea azul indica el <strong>total de la demanda comercial</strong> (VR) del agente. Mientras más verde y menos amarillo se vea, más protegido está el agente contra los cambios de precio de la bolsa. Una cobertura alta por contratos significa un costo de compra más estable y predecible mes a mes.
+                    </p>
                     <div class="chart-wrapper">
                         <canvas id="chartCoberturaDemanda"></canvas>
                     </div>
@@ -166,6 +169,9 @@
                         <span class="chart-card-title">💰 Rendimiento Financiero</span>
                         <span class="chart-card-subtitle">Costos, Sobrecosto y Recaudo</span>
                     </div>
+                    <p class="chart-explanation">
+                        <strong>¿Qué muestra esta gráfica?</strong> La línea verde es el <strong>Costo Unitario CU m-1</strong>, es decir, el precio promedio al que el agente compró la energía por kilovatio-hora en el mes anterior. La línea roja punteada es el <strong>sobrecosto por incobrabilidad</strong>: lo que el agente no logra recuperar de sus clientes del PUI aunque esté obligado a girarlo al CIOR. La línea morada punteada es el <strong>recaudo real efectivo</strong>: lo que efectivamente entró a la caja del agente. Si la línea roja se aleja de la morada, mayor es el faltante financiero del mecanismo PUI para el agente.
+                    </p>
                     <div class="chart-wrapper">
                         <canvas id="chartRendimientoFinanciero"></canvas>
                     </div>

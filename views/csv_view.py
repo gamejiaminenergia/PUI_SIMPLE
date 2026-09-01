@@ -73,17 +73,24 @@ class CSVReportView(BaseReportView):
             print("[CSV View] No hay datos disponibles para exportar.")
             return output_path
 
+        # Normalizar 'mes' (date/datetime -> str) y descartar keys inconsistentes
+        for r in data:
+            mes = r.get('mes')
+            if mes is not None and not isinstance(mes, str):
+                r['mes'] = mes.strftime("%Y-%m-%d") if hasattr(mes, 'strftime') else str(mes)
+
         mapped_rows = []
         for r in data:
             mapped_row = {BUSINESS_COLUMN_MAP.get(k, k): v for k, v in r.items()}
             mapped_rows.append(mapped_row)
 
         fieldnames = list(mapped_rows[0].keys())
+        clean_rows = [{k: row.get(k, None) for k in fieldnames} for row in mapped_rows]
 
         with open(output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(mapped_rows)
+            writer.writerows(clean_rows)
 
         print(f"[CSV View] Informe exportado exitosamente a: {output_path}")
         return output_path

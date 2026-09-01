@@ -5,7 +5,6 @@ utilizando nombres de columna amigables del negocio y la base de datos con unida
 """
 import os
 import csv
-import logging
 from typing import List, Dict, Any
 import pandas as pd
 
@@ -15,8 +14,9 @@ from models.pui_forecast_model import PUIForecastModel
 from views.console_view import ConsoleReportView
 from views.html_view import HTMLReportView
 from views.csv_view import CSVReportView
+from config.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("controllers.report")
 
 # Mapeo de nombres técnicos a nombres familiares de negocio/BD con unidades explícitas
 BUSINESS_COLUMN_MAP = {
@@ -99,14 +99,21 @@ class ReportController:
         """
         formats = formats or ["console", "html", "csv"]
         os.makedirs(output_dir, exist_ok=True)
+        logger.info("generate_report | agente=%s | mode=%s | formats=%s | output_dir=%s",
+                    params.agente_objetivo if params else None, mode, formats, output_dir)
 
         if params is None:
             params = self.forecast_model.get_forecast_params()
 
-        print(f"\n[MVC Controller] Iniciando generación de informes PUI (Modo: '{mode.upper()}') para agente '{params.agente_objetivo}'...")
+        logger.info("Iniciando generación PUI | agente=%s | mode=%s",
+                    params.agente_objetivo, mode.upper())
 
         if mode.lower() in ["forecast", "both"]:
-            daily_df, raw_data, kpis = self.forecast_model.generate_daily_and_monthly_forecast(params)
+            try:
+                daily_df, raw_data, kpis = self.forecast_model.generate_daily_and_monthly_forecast(params)
+            except Exception:
+                logger.exception("Fallo en forecast_model.generate_daily_and_monthly_forecast")
+                raise
         else:
             raw_data = self.model.get_report_data(params)
             for r in raw_data:
@@ -114,6 +121,9 @@ class ReportController:
                 r["es_pronostico"] = False
             kpis = self.model.calculate_summary_kpis(raw_data, params)
             daily_df = pd.DataFrame()
+
+        logger.info("Datos: raw_data=%d filas | daily_df=%d filas",
+                    len(raw_data), len(daily_df))
 
         results = {
             "kpis": kpis,
@@ -132,12 +142,16 @@ class ReportController:
         for fmt in formats:
             fmt_lower = fmt.lower().strip()
             if fmt_lower in self.views:
-                view = self.views[fmt_lower]
-                out_path = html_path if fmt_lower == "html" else (csv_path if fmt_lower == "csv" else None)
-                rendered_res = view.render(raw_data, kpis, params, out_path)
-                results["outputs"][fmt_lower] = rendered_res
+                try:
+                    view = self.views[fmt_lower]
+                    out_path = html_path if fmt_lower == "html" else (csv_path if fmt_lower == "csv" else None)
+                    rendered_res = view.render(raw_data, kpis, params, out_path)
+                    results["outputs"][fmt_lower] = rendered_res
+                    logger.info("Vista '%s' renderizada OK -> %s", fmt_lower, out_path)
+                except Exception:
+                    logger.exception("Fallo al renderizar vista '%s'", fmt_lower)
 
-        print(f"[MVC Controller] Proceso completado exitosamente. Todos los archivos se guardaron en: '{output_dir}/'\n")
+        logger.info("Reporte finalizado OK en %s", output_dir)
         return results
 
     def _export_specialized_csvs(self, output_dir: str, raw_data: List[Dict[str, Any]], daily_df: pd.DataFrame, params: PUIParameters):
@@ -151,11 +165,16 @@ class ReportController:
                 mapped_row = {BUSINESS_COLUMN_MAP.get(k, k): v for k, v in r.items()}
                 mapped_rows.append(mapped_row)
 
+            # Tomar columnas del primer registro y descartar keys extra (modo_cobertura, etc.)
+            base_keys = list(mapped_rows[0].keys())
+            clean_rows = [{k: row.get(k, None) for k in base_keys} for row in mapped_rows]
+
             with open(path_unificado, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=list(mapped_rows[0].keys()))
+                writer = csv.DictWriter(f, fieldnames=base_keys)
                 writer.writeheader()
-                writer.writerows(mapped_rows)
+                writer.writerows(clean_rows)
             print(f"  ✓ Exportado Dataset Unificado: {path_unificado}")
+            logger.debug("CSV dataset_unificado exportado: %d filas", len(clean_rows))
 
         # 2. CSV de Auditoría de Fórmulas CREG & Cobertura de Demanda
         path_auditoria = os.path.join(output_dir, "pui_auditoria_formulas.csv")
@@ -201,6 +220,7 @@ class ReportController:
                 writer.writeheader()
                 writer.writerows(auditoria_rows)
             print(f"  ✓ Exportado CSV Auditoría de Fórmulas CREG: {path_auditoria}")
+            logger.debug("CSV auditoria_formulas exportado: %d filas", len(auditoria_rows))
 
         # 3. CSV de Resumen Mensual Consolidado (High-Level)
         path_resumen_mensual = os.path.join(output_dir, "pui_resumen_mensual.csv")
@@ -240,6 +260,7 @@ class ReportController:
                 writer.writeheader()
                 writer.writerows(resumen_list)
             print(f"  ✓ Exportado CSV Resumen Mensual Consolidado: {path_resumen_mensual}")
+        logger.debug("CSV resumen_mensual exportado: %d meses", len(resumen_list))
 
         # 4. CSV de Predicciones Diarias Granulares con TimesFM y Cobertura
         path_diario = os.path.join(output_dir, "pui_series_diarias_forecast.csv")
@@ -268,3 +289,4 @@ class ReportController:
             })
             df_mapped.to_csv(path_diario, index=False, encoding="utf-8")
             print(f"  ✓ Exportado CSV Predicciones Diarias TimesFM: {path_diario}")
+            logger.debug("CSV series_diarias exportado: %d filas", len(df_mapped))

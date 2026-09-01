@@ -53,75 +53,103 @@
                     }
                 }
             }
-        });
-
-        // Chart 3: Cobertura y Demanda - Contratos vs Bolsa vs VR
+        });        // Chart 3: Cobertura y Demanda - Contratos vs Bolsa vs VR
         new Chart(document.getElementById('chartCoberturaDemanda'), {
             type: 'bar',
             data: {
                 labels: labelsMeses,
                 datasets: [
                     {
-                        label: 'Cobertura Contratos [kWh]',
+                        label: 'Energía Contratos Bilaterales [kWh]',
                         data: dataContratos,
-                        backgroundColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
                         borderColor: '#059669',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.6,
+                        order: 2
                     },
                     {
-                        label: 'Exposición Bolsa Spot [kWh]',
+                        label: 'Energía Bolsa Spot [kWh]',
                         data: dataBolsa,
-                        backgroundColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
                         borderColor: '#d97706',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.6,
+                        order: 3
                     },
                     {
-                        label: 'Demanda Total Agente (VR) [kWh]',
+                        label: 'Demanda Total Agente VR [kWh]',
                         data: dataVR,
                         type: 'line',
-                        borderColor: '#3b82f6',
-                        borderWidth: 3,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2.5,
+                        borderDash: [8, 4],
                         fill: false,
                         tension: 0.3,
-                        pointRadius: 3,
-                        yAxisID: 'y2'
+                        pointRadius: 4,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1.5,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y',
+                        order: 1
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                            padding: 16,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': ' + fmtCompact(ctx.parsed.y) + ' kWh';
+                            }
+                        }
+                    },
                     title: {
                         display: true,
-                        text: 'Cobertura y Demanda por Período',
+                        text: 'Cobertura de Demanda por Período — Contratos Bilaterales vs Bolsa Spot',
                         color: '#1e293b',
-                        font: { size: 16, weight: 600 }
+                        font: { size: 15, weight: 600 }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                        title: { display: true, text: 'Período (Mes)', color: '#64748b', font: { weight: 500} },
+                        grid: { color: 'rgba(0, 0, 0, 0.08)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#475569', font: { weight: 500, size: 12 } },
                         ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
                     },
                     y: {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'Energía [kWh]', color: '#64748b', font: { weight: 500} },
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: { callback: fmtCompact }
-                    },
-                    y2: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        title: { display: true, text: 'Demanda Total [kWh]', color: '#64748b', font: { weight: 500} },
-                        ticks: { callback: fmtCompact }
+                        title: {
+                            display: true,
+                            text: 'Energía [kWh] — Contratos, Bolsa y VR Total',
+                            color: '#475569',
+                            font: { weight: 500, size: 12 }
+                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+                        ticks: {
+                            callback: fmtCompact,
+                            font: { size: 11 }
+                        }
                     }
                 }
             }
@@ -197,6 +225,7 @@
         });
 
         // Chart 2: Precios de Contratos (CU) y Cargos PUI
+        // CRPUI/CFPUI están escalados x1e6 (COP/MM kWh) para ser visibles junto al CU (~300 COP/kWh)
         new Chart(document.getElementById('chartPricesAndTariffs'), {
             type: 'line',
             data: {
@@ -213,21 +242,26 @@
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Cargo Transitorio CRPUI [COP/kWh]',
+                        label: 'Cargo Transitorio CRPUI [COP/MM kWh]',
                         data: dataCRPUI,
                         borderColor: '#8b5cf6',
                         borderWidth: 2,
                         borderDash: [4, 4],
                         fill: false,
-                        yAxisID: 'y1'
+                        yAxisID: 'y1',
+                        // Tooltip muestra el valor real en COP/kWh (sin escala)
+                        tooltipValueProvider: (v) => v / 1e6
                     },
                     {
-                        label: 'Cargo Competitivo CFPUI [COP/kWh]',
+                        label: 'Cargo Competitivo CFPUI [COP/MM kWh]',
                         data: dataCFPUI,
                         borderColor: '#f59e0b',
                         borderWidth: 2,
                         fill: false,
-                        yAxisID: 'y1'
+                        yAxisID: 'y1',
+                        // Si CFPUI es 0, la línea queda sobre el eje x; permitir ver el dato
+                        spanGaps: true,
+                        tooltipValueProvider: (v) => v / 1e6
                     }
                 ]
             },
@@ -236,7 +270,22 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: (ctx) => {
+                                const label = ctx.dataset.label || '';
+                                const raw = ctx.raw;
+                                const realValue = ctx.dataset.tooltipValueProvider
+                                    ? ctx.dataset.tooltipValueProvider(raw)
+                                    : raw;
+                                const num = (realValue || 0).toLocaleString('es-CO',
+                                    { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+                                return `${label}: ${num} (eje: ${(raw || 0).toFixed(2)})`;
+                            }
+                        }
+                    },
                     forecastStartPlugin: {
                         forecastIndex: forecastIndex,
                         color: '#f59e0b',
@@ -261,8 +310,9 @@
                         type: 'linear',
                         display: true,
                         position: 'right',
-                        title: { display: true, text: 'Tarifas PUI [COP/kWh]', color: '#9ca3af', font: { weight: 600 } },
+                        title: { display: true, text: 'Tarifas PUI [COP/MM kWh] (×10⁶)', color: '#9ca3af', font: { weight: 600 } },
                         grid: { drawOnChartArea: false },
+                        beginAtZero: true,
                         ticks: { callback: fmtCompact }
                     }
                 }

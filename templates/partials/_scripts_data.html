@@ -9,8 +9,11 @@
         const dataBolsa = tendencia.map(d => d.energia_bolsa_kwh || (d.vr_agente_kwh * 0.15));
 
         const dataCU = tendencia.map(d => d.cu_cop_kwh || 0);
-        const dataCRPUI = tendencia.map(d => d.crpui_unitario || 0);
-        const dataCFPUI = tendencia.map(d => d.cfpui_unitario || 0);
+        // CRPUI/CFPUI vienen como ratio micro (COP/kWh). Multiplicamos por 1e6 para
+        // visualizar en escala "COP por millón de kWh" en el eje secundario.
+        const CRPUI_SCALE = 1e6;
+        const dataCRPUI = tendencia.map(d => (d.crpui_unitario || 0) * CRPUI_SCALE);
+        const dataCFPUI = tendencia.map(d => (d.cfpui_unitario || 0) * CRPUI_SCALE);
 
         const dataPuiKwh = tendencia.map(d => d.pui_energia_kwh || 0);
         const dataEgresoCop = tendencia.map(d => d.egreso_cop || 0);

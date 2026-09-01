@@ -24,6 +24,23 @@ class HTMLReportView(BaseReportView):
 
         kpis_json = json.dumps(kpis, default=str)
 
+        # Normalizar 'mes' a str y Decimal/date -> tipos nativos JSON-friendly
+        for row in data:
+            mes = row.get('mes')
+            if mes is not None and not isinstance(mes, str):
+                row['mes'] = mes.strftime("%Y-%m-%d") if hasattr(mes, 'strftime') else str(mes)
+            for k, v in list(row.items()):
+                if hasattr(v, '__class__') and v.__class__.__name__ == 'Decimal':
+                    try:
+                        row[k] = float(v)
+                    except (TypeError, ValueError):
+                        pass
+                elif hasattr(v, 'isoformat') and not isinstance(v, (str, int, float, bool)):
+                    try:
+                        row[k] = v.isoformat()
+                    except Exception:
+                        pass
+
         try:
             from jinja2 import Environment, FileSystemLoader
             template_dir = os.path.dirname(os.path.abspath(self.template_path))

@@ -285,19 +285,27 @@ class PUIForecastModel:
                 "param_esquema_competitivo": params.esquema_competitivo
             })
 
-        # 5. Unificar registros Históricos + Forecast
+        # 5. Unificar registros Históricos + Forecast (normalizar 'mes' a str para orden estable)
         combined_rows = hist_monthly_data + forecast_monthly_rows
-        combined_rows.sort(key=lambda x: (x.get('mes', ''), x.get('mercado_code', '')))
+        def _sort_key(x):
+            mes = x.get('mes', '')
+            return (str(mes) if mes is not None else '', x.get('mercado_code', ''))
+        combined_rows.sort(key=_sort_key)
 
         # 6. Recalcular KPIs integrados
         combined_kpis = self.historical_model.calculate_summary_kpis(combined_rows, params)
         combined_kpis['total_registros_forecast'] = len(forecast_monthly_rows)
         combined_kpis['dias_pronosticados'] = len(daily_forecast_df['fecha'].unique()) if not daily_forecast_df.empty else 0
 
-        # Totales acumulados de cobertura
-        tot_demanda = sum(r.get("vr_agente_kwh", 0) for r in combined_rows)
-        tot_contratos = sum(r.get("energia_contratos_kwh", 0) for r in combined_rows)
-        tot_bolsa = sum(r.get("energia_bolsa_kwh", 0) for r in combined_rows)
+        # Totales acumulados de cobertura (Decimal -> float para evitar TypeError en sums)
+        def _to_float(v):
+            try:
+                return float(v) if v is not None else 0.0
+            except (TypeError, ValueError):
+                return 0.0
+        tot_demanda = sum(_to_float(r.get("vr_agente_kwh", 0)) for r in combined_rows)
+        tot_contratos = sum(_to_float(r.get("energia_contratos_kwh", 0)) for r in combined_rows)
+        tot_bolsa = sum(_to_float(r.get("energia_bolsa_kwh", 0)) for r in combined_rows)
         combined_kpis['total_demanda_cobertura_kwh'] = tot_demanda
         combined_kpis['total_energia_contratos_kwh'] = tot_contratos
         combined_kpis['total_energia_bolsa_kwh'] = tot_bolsa

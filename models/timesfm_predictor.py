@@ -2,13 +2,24 @@
 Predictor de Series Temporales PUI basado en Google TimesFM.
 Genera pronósticos diarios (Daily) de Demanda Regulada (VR) y Precios de Contratos (CU).
 """
+import os
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import pandas as pd
 import numpy as np
 
-logger = logging.getLogger(__name__)
+from config.logging_config import get_logger
+
+logger = get_logger("models.timesfm_predictor")
+
+# Forzar modo offline para evitar peticiones HTTP a HuggingFace en cada ejecución.
+# El modelo debe estar previamente descargado en ~/.cache/huggingface/hub
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
+os.environ.setdefault("TIMESFM_LOCAL_MODEL_PATH",
+                       os.path.expanduser("~/.cache/huggingface/hub"))
 
 class TimesFMPredictor:
     """
@@ -133,8 +144,11 @@ class TimesFMPredictor:
             "ANTIOQUIA", "BOGOTA", "CARIBE_MAR", "CARIBE_SOL", "VALLE", "SANTANDER", "CUNDINAMARCA", "TOLIMA"
         ]
 
-        # Extraer último valor de CU y tendencia
-        last_cu = historical_daily_df['precio_prom_contratos_cop_kwh'].iloc[-1] if 'precio_prom_contratos_cop_kwh' in historical_daily_df.columns else 330.0
+        # Extraer último valor de CU y tendencia (psycopg2 devuelve Decimal -> convertir a float)
+        if 'precio_prom_contratos_cop_kwh' in historical_daily_df.columns and len(historical_daily_df) > 0:
+            last_cu = float(historical_daily_df['precio_prom_contratos_cop_kwh'].iloc[-1])
+        else:
+            last_cu = 330.0
 
         for day_idx, date_val in enumerate(future_dates):
             date_str = date_val.strftime("%Y-%m-%d")
@@ -153,7 +167,10 @@ class TimesFMPredictor:
             for m in mercados:
                 # Filtrar historial de este mercado
                 m_hist = historical_daily_df[historical_daily_df['mercado_code'] == m] if 'mercado_code' in historical_daily_df.columns else pd.DataFrame()
-                base_vr = m_hist['vr_mercado_kwh'].mean() if (len(m_hist) > 0 and 'vr_mercado_kwh' in m_hist.columns) else 800000.0
+                if len(m_hist) > 0 and 'vr_mercado_kwh' in m_hist.columns:
+                    base_vr = float(m_hist['vr_mercado_kwh'].mean())
+                else:
+                    base_vr = 800000.0
 
                 # Predicción TimesFM / Fallback para la demanda del mercado
                 vr_m_pred = base_vr * (1.0 + (day_idx * 0.0003)) * seasonality_factor * (1.0 + np.random.normal(0, 0.008))

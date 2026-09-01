@@ -55,6 +55,147 @@
             }
         });
 
+        // Chart 3: Cobertura y Demanda - Contratos vs Bolsa vs VR
+        new Chart(document.getElementById('chartCoberturaDemanda'), {
+            type: 'bar',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Cobertura Contratos [kWh]',
+                        data: dataContratos,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Exposición Bolsa Spot [kWh]',
+                        data: dataBolsa,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Demanda Total Agente (VR) [kWh]',
+                        data: dataVR,
+                        type: 'line',
+                        borderColor: '#3b82f6',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        yAxisID: 'y2'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    title: {
+                        display: true,
+                        text: 'Cobertura y Demanda por Período',
+                        color: '#1e293b',
+                        font: { size: 16, weight: 600 }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#64748b', font: { weight: 500} },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Energía [kWh]', color: '#64748b', font: { weight: 500} },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    },
+                    y2: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Demanda Total [kWh]', color: '#64748b', font: { weight: 500} },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+
+        // Chart 4: Rendimiento Financiero - Costos y Sobrecosto
+        new Chart(document.getElementById('chartRendimientoFinanciero'), {
+            type: 'line',
+            data: {
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Costo Unitario CU m-1 [COP/kWh]',
+                        data: dataCU,
+                        borderColor: '#14b8a6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.15)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Sobrecosto Incobrabilidad [COP]',
+                        data: dataSobrecostoCop,
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.2,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Recaudo Real Efectivo [COP]',
+                        data: dataRecaudoCop,
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2,
+                        borderDash: [2, 2],
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false },
+                    title: {
+                        display: true,
+                        text: 'Rendimiento Financiero por Período',
+                        color: '#1e293b',
+                        font: { size: 16, weight: 600 }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        title: { display: true, text: 'Período (Mes)', color: '#64748b', font: { weight: 500} },
+                        ticks: { maxRotation: 45, minRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Valor [COP]', color: '#64748b', font: { weight: 500} },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: { callback: fmtCompact }
+                    }
+                }
+            }
+        });
+
         // Chart 2: Precios de Contratos (CU) y Cargos PUI
         new Chart(document.getElementById('chartPricesAndTariffs'), {
             type: 'line',

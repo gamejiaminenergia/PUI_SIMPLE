@@ -38,10 +38,11 @@ def main():
         raise SystemExit(1)
 
     # Determinar qué agentes procesar
-    if args.todos:
-        target_agents = agents_list
-    elif args.agente:
+    # Por defecto (sin --agente ni --todos) se procesan TODOS los agentes de la lista.
+    if args.agente:
         target_agents = [args.agente]
+    elif agents_list:
+        target_agents = agents_list
     else:
         target_agents = [raw_config.get("agent", "ETTC")]
 

@@ -493,32 +493,32 @@
             <!-- KPI Grid -->
             <div class="kpi-grid">
                 <div class="kpi-card teal">
-                    <div class="kpi-title">Cobertura de Demanda Agente [kWh]</div>
-                    <div class="kpi-value text-teal">{{ "{:,.0f}".format(kpis.total_energia_contratos_kwh or (kpis.total_pui_kwh * 0.85)) }} <span style="font-size:0.9rem; font-weight:normal;">kWh Contratos</span></div>
-                    <div class="kpi-sub">Exposición Bolsa Spot: {{ "{:,.0f}".format(kpis.total_energia_bolsa_kwh or (kpis.total_pui_kwh * 0.15)) }} kWh</div>
+                    <div class="kpi-title">Cobertura de Demanda Agente</div>
+                    <div class="kpi-value text-teal">{{ "{:,.1f}".format((kpis.total_energia_contratos_kwh or (kpis.total_pui_kwh * 0.85)) / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">GWh Contratos</span></div>
+                    <div class="kpi-sub">Exposición Bolsa Spot: {{ "{:,.1f}".format((kpis.total_energia_bolsa_kwh or (kpis.total_pui_kwh * 0.15)) / 1_000_000) }} GWh</div>
                 </div>
 
                 <div class="kpi-card purple">
-                    <div class="kpi-title">Energía PUI Total Unificada [kWh]</div>
-                    <div class="kpi-value">{{ "{:,.0f}".format(kpis.total_pui_kwh) }} <span style="font-size:0.9rem; font-weight:normal;">kWh</span></div>
-                    <div class="kpi-sub">Monto proyectado: ${{ "{:,.2f}".format(kpis.total_pui_cop) }} COP</div>
+                    <div class="kpi-title">Energía PUI Total Unificada</div>
+                    <div class="kpi-value">{{ "{:,.2f}".format(kpis.total_pui_kwh / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">GWh</span></div>
+                    <div class="kpi-sub">Monto proyectado: ${{ "{:,.1f}".format(kpis.total_pui_cop / 1_000_000) }} MM COP</div>
                 </div>
 
                 <div class="kpi-card warning">
-                    <div class="kpi-title">Egreso por Giros Acumulado al CIOR [COP]</div>
-                    <div class="kpi-value">${{ "{:,.2f}".format(kpis.total_egreso_giro_cop) }}</div>
+                    <div class="kpi-title">Egreso por Giros Acumulado al CIOR</div>
+                    <div class="kpi-value">${{ "{:,.1f}".format(kpis.total_egreso_giro_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
                     <div class="kpi-sub">Obligación regulada CNIOR</div>
                 </div>
 
                 <div class="kpi-card danger">
-                    <div class="kpi-title">Flujo Neto de Caja Proyectado [COP]</div>
-                    <div class="kpi-value text-red">${{ "{:,.2f}".format(kpis.flujo_neto_caja_total_cop) }}</div>
+                    <div class="kpi-title">Flujo Neto de Caja Proyectado</div>
+                    <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.flujo_neto_caja_total_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
                     <div class="kpi-sub">Diferencia acumulada de recaudo</div>
                 </div>
 
                 <div class="kpi-card danger">
-                    <div class="kpi-title">Sobrecosto Acumulado Incobrabilidad [COP]</div>
-                    <div class="kpi-value text-red">${{ "{:,.2f}".format(kpis.sobrecosto_total_cop) }}</div>
+                    <div class="kpi-title">Sobrecosto Acumulado Incobrabilidad</div>
+                    <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.sobrecosto_total_cop / 1_000_000) }} <span style="font-size:0.9rem; font-weight:normal;">MM COP</span></div>
                     <div class="kpi-sub">Pérdida promedio: {{ "%.2f"|format(kpis.pct_perdida_promedio) }}%</div>
                 </div>
             </div>
@@ -858,6 +858,14 @@
         const dataFlujoCop = tendencia.map(d => d.flujo_cop || 0);
         const dataSobrecostoCop = tendencia.map(d => d.sobrecosto_cop || 0);
 
+        // Índice donde comienza el pronóstico (para la línea punteada vertical)
+        const forecastIndex = (function() {
+            const idx = tendencia.findIndex(d => d.es_pronostico);
+            return idx === -1 ? labelsMeses.length : idx;
+        })();
+        // Anotación reutilizable de línea vertical de inicio del forecast (ejes lineales).
+        // Se inyecta por gráfica en el plugin de anotaciones según necesidades.
+
         // Estilos Globales Chart.js Dark Mode Glassmorphism
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.font.family = "'Outfit', sans-serif";
@@ -871,6 +879,40 @@
             if (abs >= 1e3) return (v / 1e3).toFixed(0) + ' K';
             return Number.isInteger(v) ? v.toString() : v.toFixed(2);
         };
+
+        // Plugin personalizado: dibuja una línea vertical punteada en el índice donde
+        // comienza el pronóstico (forecastIndex) para gráficas con la opción markForecastStart.
+        const forecastStartPlugin = {
+            id: 'forecastStartLine',
+            afterDatasetsDraw(chart, args, opts) {
+                if (!opts.forecastIndex || opts.forecastIndex <= 0) return;
+                const xScale = chart.scales.x;
+                if (!xScale) return;
+                const x = xScale.getPixelForValue(opts.forecastIndex - 0.5);
+                const { ctx, chartArea } = chart;
+                const top = chartArea.top;
+                const bottom = chartArea.bottom;
+
+                ctx.save();
+                ctx.strokeStyle = opts.color || '#f59e0b';
+                ctx.lineWidth = opts.lineWidth || 2;
+                ctx.setLineDash([6, 6]);
+                ctx.beginPath();
+                ctx.moveTo(x, top);
+                ctx.lineTo(x, bottom);
+                ctx.stroke();
+
+                // Etiqueta "Forecast"
+                if (opts.label) {
+                    ctx.fillStyle = opts.color || '#f59e0b';
+                    ctx.font = 'bold 11px Outfit, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(opts.label, x, top + 12);
+                }
+                ctx.restore();
+            }
+        };
+        Chart.register(forecastStartPlugin);
 
         // Chart 1: Cobertura de Demanda (Contratos vs Bolsa Spot vs Demanda Total)
         new Chart(document.getElementById('chartDemandCoverage'), {
@@ -907,7 +949,12 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
                 },
                 scales: {
                     x: {
@@ -965,7 +1012,12 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
                 },
                 scales: {
                     x: {
@@ -1034,7 +1086,12 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
                 },
                 scales: {
                     x: {
@@ -1092,7 +1149,12 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
+                    tooltip: { mode: 'index', intersect: false },
+                    forecastStartPlugin: {
+                        forecastIndex: forecastIndex,
+                        color: '#f59e0b',
+                        label: 'Inicio Forecast'
+                    }
                 },
                 scales: {
                     x: {

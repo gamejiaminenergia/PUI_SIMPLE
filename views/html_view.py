@@ -45,7 +45,7 @@ class HTMLReportView(BaseReportView):
         return f"""<!DOCTYPE html>
 <html>
 <head><title>Informe PUI - {kpis['agente_code']}</title></head>
-<body style="font-family:sans-serif; background:#0a0e17; color:#fff; padding:2rem;">
+<body style="font-family:sans-serif; background:#ffffff; color:#1e293b; padding:2rem;">
 <h1>Informe PUI - {kpis['agente_code']} ({kpis['agente_name']})</h1>
 <p>Rol: {kpis['rol_pui']} | CIOR: {kpis['cior_name']}</p>
 <h2>Resumen Financiero</h2>

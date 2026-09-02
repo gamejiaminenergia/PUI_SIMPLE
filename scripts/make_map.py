@@ -89,6 +89,34 @@ def build_dept_data():
     return by_dept
 
 
+def _dept_display(name: str) -> str:
+    """Capitaliza nombres de departamento en español correcto (Valle del Cauca)."""
+    menores = {"del", "de", "la", "las", "los", "y", "e", "san", "santa", "san andres"}
+    words = name.lower().split()
+    out = []
+    for i, w in enumerate(words):
+        if w in menores and i > 0:
+            out.append(w)
+        else:
+            out.append(w.capitalize())
+    return " ".join(out)
+
+
+def build_dept_table():
+    """Lista ordenada de departamentos con demanda CNIOR (GWh) y % para la tabla."""
+    dept_data = build_dept_data()
+    total = sum(dept_data.values())
+    rows = []
+    for d, v in dept_data.items():
+        rows.append({
+            "dept": _dept_display(d),
+            "gwh": v / 1e9,
+            "pct": (v / total * 100) if total else 0.0,
+        })
+    rows.sort(key=lambda r: r["gwh"], reverse=True)
+    return rows
+
+
 def generate_map():
     with open(GEO, "r", encoding="utf-8") as f:
         geojson = json.load(f)

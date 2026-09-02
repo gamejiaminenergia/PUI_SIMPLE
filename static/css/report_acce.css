@@ -183,10 +183,11 @@ h3 { margin-top: 12pt; margin-bottom: 6pt; orphans: 3; widows: 3; }
     border-radius: 2pt;
 }
 .kpi-card .value {
-    font-size: 15pt;
+    font-size: 11pt;
     font-weight: 700;
     color: #013A6F;
     font-family: "Inter", Arial, sans-serif;
+    line-height: 1.15;
 }
 .kpi-card .label {
     font-size: 7.5pt;
@@ -204,18 +205,18 @@ table.data {
     width: 100%;
     border-collapse: collapse;
     margin: 8pt 0 10pt 0;
-    font-size: 8.5pt;
+    font-size: 7.5pt;
 }
 table.data thead th {
     background: #013A6F;
     color: #FFFFFF;
     font-weight: 600;
     text-align: left;
-    padding: 5pt 6pt;
+    padding: 4pt 4pt;
     border: 0.5pt solid #013A6F;
 }
 table.data tbody td {
-    padding: 4pt 6pt;
+    padding: 3pt 4pt;
     border: 0.5pt solid #D9D9D6;
     vertical-align: top;
 }

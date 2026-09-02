@@ -18,6 +18,7 @@ Estudio encargado por la **Asociación Colombiana de Comercializadores de Energ�
 - **Benchmark comparativo** de sobrecostos PUI por agente del config
 - **Sistema de logs robusto** (`logs/`) con rotación diaria y archivo de errores
 - **Salida organizada** en `output/<SIGLA>/` por agente
+- **PDFs entregables**: informe ejecutivo institucional (`pdf/informe/`) y 61 presentaciones por agente (`pdf/anexo/`) con gráficas **SVG vectorial**
 - **Marca de Asociados ACCE** en reportes, ranking y datasets
 
 ## 📁 Estructura de Salidas (`output/<SIGLA>/`)
@@ -55,6 +56,45 @@ Cuando se procesan **2+ agentes** (con `--todos` o por defecto), el sistema gene
 - `docs/resumen_ejecutivo_pui.md` — copia "último" estable
 
 Contiene: impacto agregado del PUI, cobertura global de demanda (contratos vs bolsa), ranking completo de agentes por sobrecosto con marca de Asociados ACCE, distribución de pérdida por incobrabilidad, narrativa de asimetría regulatoria (Artículos 11 y 12), comparativa transitorio vs mecanismo competitivo, cobertura histórico/forecast, conclusiones ejecutivas y metodología. **Listo para compartir con el cliente (ACCE).**
+
+## 📄 Informe PDF ejecutivo para ACCE (`pdf/`)
+
+Genera un **PDF institucional** (WeasyPrint + Jinja2) con el branding de ACCE, gráficas en **SVG vectorial** (Plotly + kaleido) y un **mapa coroplético de Colombia** por departamento:
+
+```bash
+# Regenera todo (gráficas + mapa + PDF) leyendo los kpis.json de output/
+.venv/bin/python scripts/build_pdf.py
+
+# Reutiliza los SVG ya generados (más rápido)
+.venv/bin/python scripts/build_pdf.py --no-assets
+
+# Salida: pdf/informe/informe_pui_acce.pdf
+```
+
+- **Datos**: recalcula los agregados de mercado con la **misma lógica** que `controllers/executive_summary.py` desde los 61 `output/<SIGLA>/kpis.json` → los números del PDF coinciden con `docs/resumen_ejecutivo_pui.md`.
+- **Montos**: siempre en **COP completos** (`$9.235.836.755.646 COP`) — nunca se usan abreviaturas ambiguas (B/MM/K/mil millones/billones) en los valores de datos; las gráficas usan valores compactos con la unidad en el eje ("Billones de COP").
+- **Branding**: paleta extraída del logo real (`docs/logo.png`) con PIL: azul `#013A6F`, naranja `#ED8A22`; fuente **Inter** estática en `static/fonts/`.
+- **Componentes**: `scripts/` (build_pdf, make_charts, make_map, data_loader), `templates/report_pui_acce.html.jinja2`, `static/css/report_acce.css`, `assets_svg/` (SVGs generados), `static/geo/colombia.geo.json` (mapa departamentos).
+
+## 📊 Presentaciones PDF por agente (`pdf/anexo/`)
+
+Genera **61 presentaciones** (una por agente) en formato **A3 apaisado, una sola página**, con el branding ACCE y gráficas en **SVG vectorial** (Plotly + kaleido). Diseñadas para compartir con el cliente (no son informes, son diapositivas ejecutivas del Dashboard):
+
+```bash
+# Genera los 61 PDFs de presentación en pdf/anexo/informe_pui_<SIGLA>.pdf
+.venv/bin/python scripts/build_anexo_pdfs.py
+
+# Solo un agente
+.venv/bin/python scripts/build_anexo_pdfs.py --agente AMPC
+
+# Conservar el HTML renderizado (para depurar)
+.venv/bin/python scripts/build_anexo_pdfs.py --keep-html
+```
+
+- **Contenido**: header de marca (logo + badges), parámetros del estudio en una línea, 5 KPIs en una sola fila, 3 gráficas de series (cobertura, precios/cargos, asignación PUI), benchmark de sobrecosto por agente y 2 gráficas financieras.
+- **Render**: WeasyPrint sobre `templates/report_presentacion_template.html`; las gráficas son **SVG vectoriales** generadas por `scripts/make_anexo_charts.py` (se verifica con `pdfimages`: solo quedan el logo y los emojis como raster, las 6 gráficas son vectores).
+- **Layout fiable en WeasyPrint**: usa `display: table` (no flexbox) con alturas calculadas para que todo el contenido llene la página A3 sin traslapes.
+- **Paleta**: azul `#013A6F`, naranja `#ED8A22`, fuente **Inter** estática (`static/fonts/`), logo `static/img/logo_header.png`.
 
 ## 🚀 Uso Rápido (CLI)
 
@@ -192,7 +232,24 @@ PUI_SIMPLE/
 │   ├── csv_view.py            # Exportación CSV con headers de negocio
 │   └── console_view.py        # Vista terminal
 ├── controllers/
-│   └── report_controller.py   # Orquestador MVC + exportación CSV especializada
+│   ├── report_controller.py   # Orquestador MVC + exportación CSV especializada
+│   └── executive_summary.py   # Resumen ejecutivo .md (formato COP compartido)
+├── scripts/                   # Generación del informe PDF (ACCE)
+│   ├── build_pdf.py           # Orquestador: KPIs → contexto → Jinja2 → WeasyPrint (informe ACCE)
+│   ├── build_anexo_pdfs.py    # Presentaciones PDF por agente (A3 apaisado, 1 página)
+│   ├── make_anexo_charts.py   # Gráficas Plotly → SVG por agente (paleta ACCE)
+│   ├── data_loader.py         # Agregaciones idénticas a executive_summary
+│   ├── make_charts.py         # Gráficas Plotly → SVG (paleta ACCE)
+│   └── make_map.py            # Mapa coroplético Colombia → SVG
+├── static/
+│   ├── css/report_acce.css    # Estilos WeasyPrint (@page, branding ACCE)
+│   ├── fonts/                 # Inter .ttf estáticos
+│   ├── img/                   # logo ACCE
+│   └── geo/colombia.geo.json  # Departamentos Colombia (choropleth)
+├── assets_svg/                # SVGs generados (gráficas + mapa del informe)
+├── pdf/informe/                # Informe PDF entregable (informe_pui_acce.pdf)
+├── pdf/anexo/                  # Presentaciones PDF por agente (informe_pui_<SIGLA>.pdf)
+│   └── _svg/<SIGLA>/           # SVGs temporales por agente (generados por make_anexo_charts)
 ├── database/
 │   ├── connection.py          # PostgreSQL + fallback mock (con logs explícitos)
 │   └── mock_data.py           # Generador sintético con demanda diferenciada por agente
@@ -201,6 +258,8 @@ PUI_SIMPLE/
 │   └── pui_errors.log         # Solo errores con traceback (30 días)
 └── templates/
     ├── report_template.html   # Layout orquestador (includes parciales)
+    ├── report_pui_acce.html.jinja2  # Plantilla del informe PDF ACCE
+    ├── report_presentacion_template.html  # Presentación 1 página A3 (anexos)
     └── partials/
         ├── _head.html         # Meta, fonts, CDNs (Chart.js, MathJax)
         ├── _styles.html       # CSS completo (dark glassmorphism)
@@ -233,6 +292,9 @@ Jinja2>=3.1.0
 psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
 # timesfm>=0.1.0  # opcional (fallback estadístico si no está)
+plotly>=5.20      # gráficas SVG del informe PDF
+kaleido>=0.2.1    # exportación Plotly → SVG
+WeasyPrint>=60.0  # render del PDF
 ```
 
 ## 🔧 Desarrollo
@@ -246,6 +308,10 @@ python3 main.py --agente ASCC --format html
 
 # Regenerar todos
 python3 main.py --todos
+
+# Regenerar PDFs (informe ACCE + presentaciones por agente)
+.venv/bin/python scripts/build_pdf.py
+.venv/bin/python scripts/build_anexo_pdfs.py
 ```
 
 ## 📝 Notas Técnicas

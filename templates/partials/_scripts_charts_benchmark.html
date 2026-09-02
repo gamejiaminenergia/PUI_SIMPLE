@@ -72,6 +72,7 @@
             }
         });
 
+        {% if not anexo_only %}
         // Chart 4: Sobrecosto e Impacto en Flujo Neto de Caja
         new Chart(document.getElementById('chartSobrecostoFlujo'), {
             type: 'line',
@@ -124,15 +125,16 @@
                 }
             }
         });
+        {% endif %}
 
-        // Chart 5: Benchmark de Sobrecosto PUI por Agente (Barras)
-        // Eje Y muestra solo las siglas (código) del agente para mayor claridad
+        // Chart 5: Benchmark de Sobrecosto PUI por Agente (Barras verticales, agentes en eje X)
+        // Eje X muestra las siglas (código) de TODOS los agentes del config
         const agenteLabels = agentesBenchmark.map(a => a.code);
         const agenteSobrecostos = agentesBenchmark.map(a => a.sobrecosto || 0);
         const agenteColores = agentesBenchmark.map(a => a.es_actual ? '#8b5cf6' : 'rgba(59, 130, 246, 0.55)');
         const agenteBorders = agentesBenchmark.map(a => a.es_actual ? '#a78bfa' : '#3b82f6');
 
-        // Ordenar barras asc por sobrecosto para que la más grande quede mejor posicionada en eje vertical
+        // Ordenar barras asc por sobrecosto para que la más grande quede a la derecha
         const idxSorted = agenteSobrecostos.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v).map(x => x.i);
         const sortedLabels = idxSorted.map(i => agenteLabels[i]);
         const sortedData = idxSorted.map(i => agenteSobrecostos[i]);
@@ -149,11 +151,12 @@
                     backgroundColor: sortedColors,
                     borderColor: sortedBorders,
                     borderWidth: 1.5,
-                    borderRadius: 4
+                    borderRadius: 3,
+                    barPercentage: 0.85,
+                    categoryPercentage: 0.9
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -169,15 +172,20 @@
                 },
                 scales: {
                     x: {
+                        title: { display: true, text: 'Agente Comercializador', color: '#9ca3af', font: { weight: 600 } },
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 9 },
+                            autoSkip: false,
+                            maxRotation: 90,
+                            minRotation: 90
+                        }
+                    },
+                    y: {
                         beginAtZero: true,
                         title: { display: true, text: 'Sobrecosto Incobrabilidad PUI [COP]', color: '#9ca3af', font: { weight: 600 } },
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
                         ticks: { callback: fmtCompact }
-                    },
-                    y: {
-                        title: { display: true, text: 'Agente Comercializador', color: '#9ca3af', font: { weight: 600 } },
-                        grid: { display: false },
-                        ticks: { font: { size: 10 }, autoSkip: false }
                     }
                 }
             }

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe PUI — ACCE · {{ kpis.agente_code }}</title>
+<style>
+    /* ============================================================
+       Presentación PUI — ACCE | Paleta institucional
+       azul #013A6F · naranja #ED8A22 · fuente Inter
+       Una sola página A3 apaisada. Layout con display:table
+       (fiable en WeasyPrint) para evitar traslapes y usar todo el alto.
+       ============================================================ */
+    @font-face {
+        font-family: "Inter";
+        src: url("static/fonts/Inter-Regular.ttf");
+        font-weight: normal;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: "Inter";
+        src: url("static/fonts/Inter-Medium.ttf");
+        font-weight: 500;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: "Inter";
+        src: url("static/fonts/Inter-SemiBold.ttf");
+        font-weight: 600;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: "Inter";
+        src: url("static/fonts/Inter-Bold.ttf");
+        font-weight: 700;
+        font-style: normal;
+    }
+
+    @page {
+        size: A3 landscape;
+        margin: 0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+        width: 420mm;
+        height: 297mm;
+        font-family: "Inter", Arial, sans-serif;
+        color: #2B2B2B;
+        font-size: 10pt;
+    }
+    body { padding: 10mm 12mm 8mm 12mm; }
+
+    /* ---- Header de marca ---- */
+    .slide-header {
+        display: table;
+        width: 100%;
+        height: 22mm;
+        border-bottom: 2.5mm solid #ED8A22;
+        margin-bottom: 4mm;
+    }
+    .slide-header > div { display: table-cell; vertical-align: middle; }
+    .slide-header .h-left { width: 30%; }
+    .slide-header .h-mid { width: 40%; text-align: center; }
+    .slide-header .h-right { width: 30%; text-align: right; }
+    .slide-header .logo { height: 12mm; }
+    .slide-header h1 {
+        font-size: 20pt;
+        font-weight: 700;
+        color: #013A6F;
+        line-height: 1.05;
+    }
+    .slide-header .sub {
+        font-size: 8.5pt;
+        color: #5a5a5a;
+        font-weight: 500;
+        margin-top: 1mm;
+    }
+    .badges-group { display: inline-block; }
+    .badge-rol {
+        display: inline-block;
+        padding: 1mm 3mm;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 7.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .badge-cnior { background: rgba(239, 68, 68, 0.12); color: #b91c1c; border: 0.5pt solid rgba(239, 68, 68, 0.35); }
+    .badge-forecast { background: rgba(1, 58, 111, 0.10); color: #013A6F; border: 0.5pt solid rgba(1, 58, 111, 0.35); }
+    .badge-acce { background: rgba(237, 138, 34, 0.15); color: #b45309; border: 0.5pt solid rgba(237, 138, 34, 0.4); }
+
+    /* ---- Panel de parámetros en una línea (table) ---- */
+    .params-panel {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        height: 14mm;
+        background: #f4f7fb;
+        border: 0.5pt solid #d9e2ec;
+        border-radius: 2mm;
+        margin-bottom: 3mm;
+    }
+    .param-item { display: table-cell; vertical-align: middle; padding: 0 3mm; }
+    .param-item + .param-item { border-left: 0.5pt solid #d9e2ec; }
+    .param-item label {
+        display: block;
+        font-size: 5.5pt;
+        color: #013A6F;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        margin-bottom: 0.5mm;
+    }
+    .param-item span { font-size: 7pt; font-weight: 600; color: #2B2B2B; }
+    .text-teal { color: #0d9488 !important; }
+    .text-purple { color: #013A6F !important; }
+    .text-emerald { color: #15803d !important; }
+    .text-amber { color: #b45309 !important; }
+
+    /* ---- KPIs: 5 en una línea (table) ---- */
+    .kpi-grid {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        height: 18mm;
+        margin-bottom: 3mm;
+        border-spacing: 3mm 0;
+    }
+    .kpi-card {
+        display: table-cell;
+        vertical-align: middle;
+        background: linear-gradient(160deg, #ffffff 0%, #f4f7fb 100%);
+        border: 0.5pt solid #d9e2ec;
+        border-top: 1.2mm solid #ED8A22;
+        border-radius: 2mm;
+        padding: 2mm 3mm;
+    }
+    .kpi-card.purple { border-top-color: #013A6F; }
+    .kpi-card.warning { border-top-color: #ED8A22; }
+    .kpi-card.danger { border-top-color: #dc2626; }
+    .kpi-card.teal { border-top-color: #0d9488; }
+    .kpi-title { font-size: 6.5pt; color: #5a5a5a; font-weight: 500; margin-bottom: 0.5mm; }
+    .kpi-value { font-size: 11.5pt; font-weight: 700; color: #013A6F; }
+    .kpi-sub { font-size: 6pt; color: #8a8a8a; margin-top: 0.5mm; }
+    .text-red { color: #dc2626 !important; }
+
+    /* ---- Gráficas (table: cada imagen escala y llena su celda) ---- */
+    .charts-row {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        border-spacing: 3mm 0;
+    }
+    .charts-row.top { height: 92mm; }
+    .charts-row.bottom { height: 112mm; }
+    .cell { display: table-cell; vertical-align: top; }
+    .chart-card {
+        height: 100%;
+        background: #ffffff;
+        border: 0.5pt solid #d9e2ec;
+        border-radius: 2mm;
+        padding: 2mm 3mm;
+    }
+    .chart-card-title { font-size: 8.5pt; font-weight: 600; color: #013A6F; margin-bottom: 0.5mm; }
+    .chart-card-subtitle { font-size: 6.5pt; color: #8a8a8a; margin-bottom: 1mm; }
+    .chart-card img {
+        width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .charts-row.top .cell { width: 33.333%; }
+    .charts-row.bottom .cell.bench { width: 65%; }
+    .charts-row.bottom .cell.side { width: 35%; }
+
+    .page-note {
+        margin-top: 3mm;
+        text-align: center;
+        font-size: 7pt;
+        color: #013A6F;
+    }
+</style>
+</head>
+<body>
+
+<!-- ===== Header de marca ===== -->
+<div class="slide-header">
+    <div class="h-left"><img class="logo" src="{{ logo_header }}" alt="ACCE"></div>
+    <div class="h-mid">
+        <h1>Informe Auditoría PUI — {{ kpis.agente_code }}</h1>
+        <div class="sub">{{ kpis.agente_name }}</div>
+    </div>
+    <div class="h-right">
+        <div class="badges-group">
+            <span class="badge-rol badge-cnior">Rol: {{ kpis.rol_pui }}</span>
+            {% if kpis.get('es_asociado_acce') %}
+            <span class="badge-rol badge-acce">★ Asociado ACCE</span>
+            {% endif %}
+            <span class="badge-rol badge-forecast">TimesFM Daily</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Parámetros en una línea ===== -->
+<div class="params-panel">
+    <div class="param-item"><label>Rango Evaluado</label><span>{{ params.fecha_inicio }} a {{ params.fecha_fin }}</span></div>
+    <div class="param-item"><label>Prima Riesgo (rcpui)</label><span>${{ "%.3f"|format(params.rcpui) }} / kWh</span></div>
+    <div class="param-item"><label>Factor Recaudo (FR)</label><span>{{ "%.1f"|format(params.factor_recaudo_cnior * 100) }}%</span></div>
+    <div class="param-item"><label>Esquema PUI</label><span>{{ 'Competitivo (CFPUI)' if params.esquema_competitivo else 'Transitorio (CRPUI)' }}</span></div>
+    <div class="param-item"><label>Cobertura Contr. / Bolsa</label><span class="text-teal">{{ "%.1f"|format((params.pct_cobertura_contratos or 0.85)*100) }}% / {{ "%.1f"|format((1.0 - (params.pct_cobertura_contratos or 0.85))*100) }}%</span></div>
+    <div class="param-item"><label>Motor Pronóstico</label><span class="text-purple">Google TimesFM</span></div>
+    <div class="param-item"><label>CIOR del Sistema</label><span>{{ kpis.cior_name }}</span></div>
+    <div class="param-item"><label>Asociado ACCE</label>
+        {% if kpis.get('es_asociado_acce') %}
+        <span class="text-emerald">★ Sí</span>
+        {% else %}
+        <span class="text-amber">No</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===== KPIs: 5 en una línea ===== -->
+<div class="kpi-grid">
+    <div class="kpi-card teal">
+        <div class="kpi-title">Cobertura de Demanda Agente</div>
+        <div class="kpi-value">{{ "{:,.1f}".format((kpis.total_energia_contratos_kwh or (kpis.total_pui_kwh * 0.85)) / 1_000_000) }} <span style="font-size:7pt;">GWh</span></div>
+        <div class="kpi-sub">Exposición Bolsa: {{ "{:,.1f}".format((kpis.total_energia_bolsa_kwh or (kpis.total_pui_kwh * 0.15)) / 1_000_000) }} GWh</div>
+    </div>
+    <div class="kpi-card purple">
+        <div class="kpi-title">Energía PUI Total</div>
+        <div class="kpi-value">{{ "{:,.2f}".format(kpis.total_pui_kwh / 1_000_000) }} <span style="font-size:7pt;">GWh</span></div>
+        <div class="kpi-sub">Monto: ${{ "{:,.1f}".format(kpis.total_pui_cop / 1_000_000) }} MM COP</div>
+    </div>
+    <div class="kpi-card warning">
+        <div class="kpi-title">Egreso Giros Acumulado al CIOR</div>
+        <div class="kpi-value">${{ "{:,.1f}".format(kpis.total_egreso_giro_cop / 1_000_000) }} <span style="font-size:7pt;">MM COP</span></div>
+        <div class="kpi-sub">Obligación regulada CNIOR</div>
+    </div>
+    <div class="kpi-card danger">
+        <div class="kpi-title">Flujo Neto de Caja Proyectado</div>
+        <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.flujo_neto_caja_total_cop / 1_000_000) }} <span style="font-size:7pt;">MM COP</span></div>
+        <div class="kpi-sub">Diferencia acumulada de recaudo</div>
+    </div>
+    <div class="kpi-card danger">
+        <div class="kpi-title">Sobrecosto Acumulado Incobrabilidad</div>
+        <div class="kpi-value text-red">${{ "{:,.1f}".format(kpis.sobrecosto_total_cop / 1_000_000) }} <span style="font-size:7pt;">MM COP</span></div>
+        <div class="kpi-sub">Pérdida promedio: {{ "%.2f"|format(kpis.pct_perdida_promedio) }}%</div>
+    </div>
+</div>
+
+<!-- ===== Gráficas fila superior (3 SVG) ===== -->
+<div class="charts-row top">
+    <div class="cell">
+        <div class="chart-card">
+            <div class="chart-card-title">⚡ Cobertura de Demanda</div>
+            <div class="chart-card-subtitle">Contratos vs Bolsa spot [GWh]</div>
+            <img src="{{ charts.cobertura }}" alt="Cobertura">
+        </div>
+    </div>
+    <div class="cell">
+        <div class="chart-card">
+            <div class="chart-card-title">💰 Precios de Contratos y Cargos PUI</div>
+            <div class="chart-card-subtitle">CU, CRPUI y CFPUI [COP/kWh]</div>
+            <img src="{{ charts.precios }}" alt="Precios">
+        </div>
+    </div>
+    <div class="cell">
+        <div class="chart-card">
+            <div class="chart-card-title">📈 Asignación PUI, Giros y Recaudo</div>
+            <div class="chart-card-subtitle">Egreso CIOR vs recaudo efectivo [MM COP]</div>
+            <img src="{{ charts.pui_cashflow }}" alt="PUI y flujo">
+        </div>
+    </div>
+</div>
+
+<!-- ===== Gráficas fila inferior (benchmark + 2 SVG) ===== -->
+<div class="charts-row bottom">
+    <div class="cell bench">
+        <div class="chart-card">
+            <div class="chart-card-title">📊 Benchmark de Sobrecostos PUI por Agente del Mercado</div>
+            <div class="chart-card-subtitle">Sobrecosto acumulado por incobrabilidad [MM COP] — {{ kpis.agente_code }} en naranja</div>
+            <img src="{{ charts.benchmark }}" alt="Benchmark">
+        </div>
+    </div>
+    <div class="cell side">
+        <div class="chart-card" style="margin-bottom:3mm;">
+            <div class="chart-card-title">📊 Cobertura y Demanda</div>
+            <div class="chart-card-subtitle">Contratos vs Bolsa vs VR Total [GWh]</div>
+            <img src="{{ charts.cobertura_demanda }}" alt="Cobertura y demanda">
+        </div>
+        <div class="chart-card">
+            <div class="chart-card-title">💰 Rendimiento Financiero</div>
+            <div class="chart-card-subtitle">Costos, Sobrecosto y Recaudo</div>
+            <img src="{{ charts.rendimiento }}" alt="Rendimiento">
+        </div>
+    </div>
+</div>
+
+<div class="page-note">ACCE — Informe PUI {{ kpis.agente_code }} · Resolución CREG 101 121 de 2026 (Art. 11 y 12)</div>
+
+</body>
+</html>

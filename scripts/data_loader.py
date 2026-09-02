@@ -158,3 +158,33 @@ def sobrecosto_por_mercado(agents: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     out = [{"mercado": k, "sobrecosto": v} for k, v in by_mkt.items()]
     out.sort(key=lambda r: r["sobrecosto"], reverse=True)
     return out
+
+
+def acce_vs_noacce(agents: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Compara la pérdida por incobrabilidad entre Asociados ACCE y No asociados."""
+    tot = sum(_safe(a["kpis"], "sobrecosto_total_cop") for a in agents)
+    groups = {"acce": [], "no_acce": []}
+    for a in agents:
+        groups["acce" if es_asociado_acce(a["agente"]) else "no_acce"].append(a)
+
+    def _grupo(g: List[Dict[str, Any]]) -> Dict[str, Any]:
+        sc = sum(_safe(a["kpis"], "sobrecosto_total_cop") for a in g)
+        rec = sum(_safe(a["kpis"], "total_recaudo_cop") for a in g)
+        top = max(g, key=lambda a: _safe(a["kpis"], "sobrecosto_total_cop"))
+        return {
+            "n": len(g),
+            "pct_agentes": (len(g) / len(agents) * 100) if agents else 0.0,
+            "sobrecosto": sc,
+            "pct_sobrecosto": (sc / tot * 100) if tot else 0.0,
+            "promedio": (sc / len(g)) if g else 0.0,
+            "recaudo": rec,
+            "top_agente": top["agente"],
+            "top_nombre": top["kpis"].get("agente_name", ""),
+            "top_sc": _safe(top["kpis"], "sobrecosto_total_cop"),
+        }
+
+    return {
+        "total": tot,
+        "acce": _grupo(groups["acce"]),
+        "no_acce": _grupo(groups["no_acce"]),
+    }

@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.data_loader import (
+    acce_vs_noacce,
     agregado_temporal,
     aggregate_market,
     buckets_perdida,
@@ -56,9 +57,15 @@ def _write(fig, name):
     return path
 
 
-def _fmt_cop_b(x):
-    """Formatea COP en billones (B)."""
-    return f"${x/1e12:,.2f} B"
+def _num_es(val):
+    """Formatea un número con separadores CO: 1.234,56."""
+    s = f"{val:,.2f}"
+    return s.replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _fmt_bill(x):
+    """Formatea un monto COP en billones (el eje de la gráfica indica 'Billones de COP')."""
+    return f"${_num_es(x / 1e12)}"
 
 
 def grafica_impacto_global(market):
@@ -67,7 +74,7 @@ def grafica_impacto_global(market):
     vals = [market["tot_egreso"], market["tot_recaudo"], market["tot_sobrecosto"]]
     colors = [BLUE, GREEN, RED]
     fig = go.Figure(go.Bar(x=cats, y=[v / 1e12 for v in vals], marker_color=colors,
-                           text=[_fmt_cop_b(v) for v in vals], textposition="outside"))
+                           text=[_fmt_bill(v) for v in vals], textposition="outside"))
     fig = _base_layout(fig, title="Impacto global del PUI — agregado de mercado (COP)")
     fig.update_yaxes(title="Billones de COP")
     return _write(fig, "impacto_global.svg")
@@ -98,7 +105,7 @@ def grafica_ranking(top_n=None):
     vals = [r["sobrecosto"] / 1e12 for r in top]
     colors = [ORANGE if r["es_asociado"] else BLUE for r in top]
     # etiquetas de valor solo en barras grandes para no saturar las 61
-    texts = [f"${v:,.2f} B" if v >= 0.10 else "" for v in vals]
+    texts = [_fmt_bill(r["sobrecosto"]) if r["sobrecosto"] / 1e12 >= 0.10 else "" for r in top]
     fig = go.Figure(go.Bar(x=vals, y=labels, orientation="h", marker_color=colors,
                            text=texts, textposition="outside", cliponaxis=False))
     # altura por agente amplia para que cada etiqueta se lea
@@ -116,23 +123,43 @@ def grafica_ranking(top_n=None):
 
 
 def grafica_temporal():
-    """Línea mensual de sobrecosto/flujo (histórico + forecast TimesFM)."""
+    """Línea mensual de sobrecosto/flujo enfocada en el arranque del PUI.
+    El histórico previo al PUI es 0; se recorta la ventana a unos meses antes
+    del inicio del pronóstico (2026-08) para que el 'despertar' del PUI ocupe
+    la mayor parte del gráfico, con una línea vertical que lo marca."""
     ts = agregado_temporal(load_all_agents())
     meses_es = ["ene", "feb", "mar", "abr", "may", "jun",
                 "jul", "ago", "sep", "oct", "nov", "dic"]
-    mes = []
-    for r in ts:
-        y, m = r["mes"][:4], int(r["mes"][5:7])
-        mes.append(f"{meses_es[m - 1]} {y[2:]}")
+    def fmt(r):
+        return f"{meses_es[int(r['mes'][5:7]) - 1]} {r['mes'][2:4]}"
+
+    # primer mes de pronóstico = mes en que el PUI entra en operación
+    first_fc = next((i for i, r in enumerate(ts) if r["pronostico"]), None)
+    if first_fc is not None:
+        ts = ts[max(0, first_fc - 3):]  # 3 meses de contexto "en cero" antes del PUI
+
+    labels = [fmt(r) for r in ts]
     sobre = [r["sobrecosto"] / 1e9 for r in ts]
     flujo = [r["flujo"] / 1e9 for r in ts]
+
+    fc_label = next((fmt(r) for r in ts if r["pronostico"]), None)
+
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=mes, y=sobre, mode="lines+markers", name="Sobrecosto",
+    fig.add_trace(go.Scatter(x=labels, y=sobre, mode="lines+markers", name="Sobrecosto",
                              line=dict(color=RED, width=2)))
-    fig.add_trace(go.Scatter(x=mes, y=flujo, mode="lines+markers", name="Flujo neto",
+    fig.add_trace(go.Scatter(x=labels, y=flujo, mode="lines+markers", name="Flujo neto",
                              line=dict(color=BLUE, width=2, dash="dot")))
-    fig = _base_layout(fig, title="Sobrecosto y flujo neto mensual — histórico y pronóstico TimesFM",
-                       showlegend=True)
+    # zona del PUI en operación + marca de inicio
+    if fc_label:
+        fig.add_vrect(x0=fc_label, x1=labels[-1], fillcolor="rgba(237,138,34,0.12)",
+                      line_width=0, layer="below")
+        fig.add_vline(x=fc_label, line_dash="dash", line_color=ORANGE, line_width=1.5)
+        # anotación manual (add_vline con texto falla en ejes de categoría)
+        fig.add_annotation(x=fc_label, y=1.03, yref="paper", text="Inicio PUI",
+                           showarrow=False, font=dict(size=10, color=BLUE),
+                           xanchor="left", yanchor="bottom")
+    fig = _base_layout(fig, title="Sobrecosto y flujo neto mensual — entrada en vigor del PUI y pronóstico TimesFM",
+                       height=360, showlegend=True)
     fig.update_yaxes(title="Miles de millones COP")
     fig.update_xaxes(type="category", tickangle=0, nticks=12)
     return _write(fig, "trayectoria_temporal.svg")
@@ -145,7 +172,7 @@ def grafica_escenarios(market):
     falt = [e["faltante"] / 1e12 for e in esc]
     colors = [RED, ORANGE, GREEN, BLUE]
     fig = go.Figure(go.Bar(x=labels, y=falt, marker_color=colors,
-                           text=[f"${v:,.2f} B" for v in falt], textposition="outside"))
+                           text=[_fmt_bill(e["faltante"]) for e in esc], textposition="outside"))
     fig = _base_layout(fig, title="Faltante de caja por escenario — transitorio vs competitivo")
     fig.update_yaxes(title="Billones de COP")
     return _write(fig, "escenarios.svg")
@@ -164,6 +191,20 @@ def grafica_distribucion():
     return _write(fig, "distribucion.svg")
 
 
+def grafica_acce_noacce():
+    """Donut: distribución del sobrecosto total entre Asociados ACCE y No asociados."""
+    agg = acce_vs_noacce(load_all_agents())
+    labels = [f"Asociados ACCE ({agg['acce']['n']})", f"No asociados ({agg['no_acce']['n']})"]
+    vals = [agg["acce"]["sobrecosto"], agg["no_acce"]["sobrecosto"]]
+    colors = [ORANGE, BLUE]
+    fig = go.Figure(go.Pie(labels=labels, values=vals, hole=0.55,
+                           marker=dict(colors=colors),
+                           textinfo="label+percent", textfont={"size": 10}))
+    fig = _base_layout(fig, title="Distribución del sobrecosto total — Asociados ACCE vs No asociados",
+                       height=340)
+    return _write(fig, "acce_noacce.svg")
+
+
 def generate_all():
     agents = load_all_agents()
     market = aggregate_market(agents)
@@ -173,7 +214,7 @@ def generate_all():
         "ranking": grafica_ranking(),
         "temporal": grafica_temporal(),
         "escenarios": grafica_escenarios(market),
-        "distribucion": grafica_distribucion(),
+        "acce_noacce": grafica_acce_noacce(),
     }
     return paths
 

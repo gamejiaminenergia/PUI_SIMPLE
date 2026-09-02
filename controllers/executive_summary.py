@@ -27,34 +27,21 @@ def _fmt_int(v):
         return "0"
 
 
+def _num_es(val):
+    """Formatea un número entero con separadores CO: 1.234.567."""
+    return f"{int(round(val)):,}".replace(",", ".")
+
+
 def _fmt_cop(v):
-    """Formatea pesos colombianos: $1.234.567,89 (estilo CO)."""
+    """Formatea pesos colombianos en COP con el monto COMPLETO, inequívoco:
+    $9.235.840.000.000 COP. Sin abreviaturas ambiguas (B/MM/K) ni palabras
+    (mil millones/billones)."""
     try:
         n = float(v)
     except (TypeError, ValueError):
-        return "$0"
-    abs_n = abs(n)
+        return "$0 COP"
     sign = "-" if n < 0 else ""
-    if abs_n >= 1e9:
-        # Miles millones (B = 'billones' estilo CO)
-        val = abs_n / 1e9
-        entero = int(val)
-        frac = val - entero
-        entero_str = f"{entero:,}".replace(",", ".")
-        return f"{sign}${entero_str},{int(round(frac*100)):02d} B"
-    if abs_n >= 1e6:
-        val = abs_n / 1e6
-        entero = int(val)
-        frac = val - entero
-        entero_str = f"{entero:,}".replace(",", ".")
-        return f"{sign}${entero_str},{int(round(frac*10)):01d} MM"
-    if abs_n >= 1e3:
-        val = abs_n / 1e3
-        entero = int(val)
-        frac = val - entero
-        entero_str = f"{entero:,}".replace(",", ".")
-        return f"{sign}${entero_str},{int(round(frac*10)):01d} K"
-    return f"{sign}${abs_n:,.0f}".replace(",", ".") if n >= 0 else f"-${abs_n:,.0f}".replace(",", ".")
+    return f"{sign}${_num_es(abs(n))} COP"
 
 
 def _fmt_kwh(v):

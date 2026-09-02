@@ -22,6 +22,7 @@ import jinja2
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.data_loader import (
+    acce_vs_noacce,
     agregado_temporal,
     aggregate_market,
     buckets_perdida,
@@ -30,7 +31,7 @@ from scripts.data_loader import (
     ranking_agentes,
 )
 from scripts.make_charts import generate_all as generate_charts
-from scripts.make_map import generate_map
+from scripts.make_map import build_dept_table, generate_map
 
 from config.acce import (
     ACCE_FULL_NAME,
@@ -74,6 +75,55 @@ def _build_context(agents):
     n_fcst = len(agents) - n_hist
 
     all_agents_alpha = sorted(a["agente"] for a in agents)
+    dept_table = build_dept_table()
+    tot_gwh = sum(r["gwh"] for r in dept_table)
+
+    # Tabla de la trayectoria temporal: misma ventana que la gráfica (desde
+    # 3 meses antes del inicio del PUI), con valores formateados como el resumen.
+    temporal_rows = []
+    first_fc = next((i for i, r in enumerate(temporal) if r["pronostico"]), 0)
+    window = temporal[max(0, first_fc - 3):]
+    meses_full = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+                  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    for r in window:
+        m = int(r["mes"][5:7])
+        temporal_rows.append({
+            "mes": f"{meses_full[m - 1]} {r['mes'][:4]}",
+            "tipo": "Pronóstico" if r["pronostico"] else "Histórico",
+            "pui": "PUI activo" if r["pronostico"] else "—",
+            "egreso": _fmt_cop(r["egreso"]),
+            "recaudo": _fmt_cop(r["recaudo"]),
+            "sobrecosto": _fmt_cop(r["sobrecosto"]),
+            "flujo": _fmt_cop(r["flujo"]),
+        })
+
+    # Distribución de la pérdida: Asociados ACCE vs No asociados
+    an = acce_vs_noacce(agents)
+    acce_noacce = {
+        "total": _fmt_cop(an["total"]),
+        "acce": {
+            "n": an["acce"]["n"],
+            "pct_agentes": an["acce"]["pct_agentes"],
+            "sobrecosto": _fmt_cop(an["acce"]["sobrecosto"]),
+            "pct_sobrecosto": an["acce"]["pct_sobrecosto"],
+            "promedio": _fmt_cop(an["acce"]["promedio"]),
+            "recaudo": _fmt_cop(an["acce"]["recaudo"]),
+            "top_agente": an["acce"]["top_agente"],
+            "top_nombre": an["acce"]["top_nombre"],
+            "top_sc": _fmt_cop(an["acce"]["top_sc"]),
+        },
+        "no_acce": {
+            "n": an["no_acce"]["n"],
+            "pct_agentes": an["no_acce"]["pct_agentes"],
+            "sobrecosto": _fmt_cop(an["no_acce"]["sobrecosto"]),
+            "pct_sobrecosto": an["no_acce"]["pct_sobrecosto"],
+            "promedio": _fmt_cop(an["no_acce"]["promedio"]),
+            "recaudo": _fmt_cop(an["no_acce"]["recaudo"]),
+            "top_agente": an["no_acce"]["top_agente"],
+            "top_nombre": an["no_acce"]["top_nombre"],
+            "top_sc": _fmt_cop(an["no_acce"]["top_sc"]),
+        },
+    }
 
     return {
         "meta": {
@@ -109,6 +159,10 @@ def _build_context(agents):
         "escenarios": escenarios,
         "temporal": temporal,
         "cobertura_temporal": {"hist": n_hist, "fcst": n_fcst},
+        "dept_table": dept_table,
+        "dept_total_gwh": tot_gwh,
+        "temporal_rows": temporal_rows,
+        "acce_noacce": acce_noacce,
         "all_agents": all_agents_alpha,
         "assets": {
             "impacto_global": os.path.join(ASSETS, "impacto_global.svg"),
@@ -116,7 +170,7 @@ def _build_context(agents):
             "ranking": os.path.join(ASSETS, "ranking_top.svg"),
             "temporal": os.path.join(ASSETS, "trayectoria_temporal.svg"),
             "escenarios": os.path.join(ASSETS, "escenarios.svg"),
-            "distribucion": os.path.join(ASSETS, "distribucion.svg"),
+            "acce_noacce": os.path.join(ASSETS, "acce_noacce.svg"),
             "mapa": os.path.join(ASSETS, "mapa_colombia.svg"),
             "logo": os.path.join(STATIC, "img", "logo.png"),
         },
@@ -154,7 +208,7 @@ def build_pdf(out_path, regenerate_assets=True):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Genera informe PDF PUI para ACCE")
-    ap.add_argument("--out", default=os.path.join(ROOT, "pdf", "informe_pui_acce.pdf"))
+    ap.add_argument("--out", default=os.path.join(ROOT, "pdf", "informe", "informe_pui_acce.pdf"))
     ap.add_argument("--no-assets", action="store_true", help="No regenerar SVGs")
     args = ap.parse_args()
     build_pdf(args.out, regenerate_assets=not args.no_assets)

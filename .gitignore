@@ -11,6 +11,8 @@ ENV/
 
 # Archivos de salida generados
 output/
+# pdf
+/pdf
 
 # Configuración con posibles datos sensibles
 config/params.yaml

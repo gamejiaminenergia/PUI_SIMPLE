@@ -170,6 +170,29 @@ de comercialización analizados, reflejando dónde se concentra la exposición d
 
 <div class="chart map"><img src="{{ assets.mapa }}"><div class="caption">Figura 4. Demanda comercial de los CNIOR por departamento (GWh). Los bloques regionales Caribe se distribuyen entre los departamentos de la costa.</div></div>
 
+<h3>Demanda comercial de los CNIOR por departamento</h3>
+<p>La siguiente tabla detalla los datos del mapa: demanda comercial de los CNIOR en cada departamento y su
+participación en el total nacional. Permite identificar con precisión dónde se concentra la obligación PUI.</p>
+<table class="data">
+    <thead><tr><th>Departamento</th><th class="num">Demanda CNIOR (GWh)</th><th class="num">Participación</th></tr></thead>
+    <tbody>
+        {% for d in dept_table %}
+        <tr>
+            <td>{{ d.dept }}</td>
+            <td class="num">{{ "%.2f"|format(d.gwh) }}</td>
+            <td class="num">{{ "%.2f"|format(d.pct) }}%</td>
+        </tr>
+        {% endfor %}
+        <tr class="total">
+            <td>Total nacional</td>
+            <td class="num">{{ "%.2f"|format(dept_total_gwh) }}</td>
+            <td class="num">100.00%</td>
+        </tr>
+    </tbody>
+</table>
+<p class="small-note">Nota: los mercados regionales Caribe (CARIBE MAR / CARIBE SOL) se distribuyen
+equitativamente entre los departamentos de la costa caribe presentes en el mapa.</p>
+
 <div class="callout warning">
     <div class="callout-title">⚠ Riesgo de cartera en áreas especiales</div>
     En el esquema transitorio, el costo de incobrabilidad de las <strong>áreas especiales o subnormales</strong>
@@ -178,14 +201,37 @@ de comercialización analizados, reflejando dónde se concentra la exposición d
 </div>
 
 <!-- ================= TRAYECTORIA ================= -->
-<h2>7. Trayectoria temporal (histórico + pronóstico)</h2>
+<h2>7. Trayectoria temporal — entrada en vigor del PUI</h2>
 <p>
-El pronóstico diario con Google TimesFM 3.0 permite proyectar el comportamiento del sobrecosto y del flujo neto
-de caja agregado hasta 2027. La gráfica evidencia el <strong>despegue del faltante</strong> en el horizonte de
-pronóstico.
+El pronóstico diario con Google TimesFM 3.0 permite proyectar el comportamiento del sobrecosto y del flujo
+neto de caja agregado hasta 2027. El gráfico se enfoca en la <strong>transición</strong>: en el período histórico
+el mecanismo PUI no estaba en operación (valores en cero), y a partir de <strong>agosto de 2026</strong> (inicio
+del pronóstico) el PUI entra en vigor y el faltante agregado <strong>despega</strong> de forma abrupta.
 </p>
 
-<div class="chart wide"><img src="{{ assets.temporal }}"><div class="caption">Figura 5. Sobrecosto y flujo neto mensual agregado — histórico y pronóstico TimesFM.</div></div>
+<div class="chart wide"><img src="{{ assets.temporal }}"><div class="caption">Figura 5. Sobrecosto y flujo neto mensual agregado. La línea vertical naranja marca la entrada en vigor del PUI (agosto 2026).</div></div>
+
+<h3>Detalle mensual del sobrecosto y flujo neto</h3>
+<p>La siguiente tabla detalla los datos de la gráfica, mes a mes, desde el período previo a la entrada en
+vigor del PUI hasta el final del pronóstico. El paso de "Histórico" a "Pronóstico" (agosto 2026) evidencia
+el momento en que el mecanismo PUI entra en operación y el faltante agregado despega.</p>
+<table class="data">
+    <thead><tr><th>Período</th><th>Tipo</th><th>PUI</th><th class="num">Sobrecosto</th><th class="num">Flujo neto</th></tr></thead>
+    <tbody>
+        {% for r in temporal_rows %}
+        <tr>
+            <td>{{ r.mes }}</td>
+            <td>{{ r.tipo }}</td>
+            <td>{{ r.pui }}</td>
+            <td class="num">{{ r.sobrecosto }}</td>
+            <td class="num">{{ r.flujo }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p class="small-note">Valores agregados de los {{ market.n }} agentes del estudio. Sobrecosto: faltante por
+incobrabilidad (egreso giro al CIOR − recaudo efectivo); Flujo neto: recaudo efectivo − egreso giro al CIOR.
+Montos expresados en pesos colombianos (COP).</p>
 
 <div class="callout tip">
     <div class="callout-title">✔ Valor del pronóstico</div>
@@ -227,23 +273,65 @@ reduce a medida que el esquema reconoce la incobrabilidad.
 </div>
 
 <!-- ================= DISTRIBUCION ================= -->
-<h2>9. Distribución de la pérdida por incobrabilidad</h2>
+<h2>9. Distribución de la pérdida por incobrabilidad — Asociados ACCE vs resto del mercado</h2>
+<p>
+La pérdida por incobrabilidad del PUI <strong>no se distribuye de forma homogénea</strong> entre los
+{{ market.n }} comercializadores del estudio. Los <strong>{{ acce_noacce.acce.n }} Asociados ACCE</strong> —que
+representan solo el {{ "%.1f"|format(acce_noacce.acce.pct_agentes) }}% de los agentes— concentran el
+<strong>{{ "%.2f"|format(acce_noacce.acce.pct_sobrecosto) }}% del sobrecosto total</strong> del mercado.
+</p>
+
+<div class="kpi-grid">
+    <div class="kpi-card negative"><div class="value">{{ acce_noacce.acce.pct_sobrecosto|round(2) }}%</div><div class="label">Sobrecosto en Asociados ACCE ({{ acce_noacce.acce.n }} agentes)</div></div>
+    <div class="kpi-card"><div class="value">{{ acce_noacce.no_acce.pct_sobrecosto|round(2) }}%</div><div class="label">Sobrecosto en No asociados ({{ acce_noacce.no_acce.n }} agentes)</div></div>
+    <div class="kpi-card negative"><div class="value">{{ acce_noacce.acce.sobrecosto }}</div><div class="label">Sobrecosto total Asociados ACCE</div></div>
+</div>
+
+<div class="chart small"><img src="{{ assets.acce_noacce }}"><div class="caption">Figura 7. Distribución del sobrecosto total por incobrabilidad entre Asociados ACCE y No asociados.</div></div>
+
 <table class="data">
-    <thead><tr><th>Rango de pérdida</th><th class="num"># Agentes</th></tr></thead>
+    <thead><tr><th>Grupo</th><th class="num"># Agentes</th><th class="num">% Agentes</th><th class="num">Sobrecosto total</th><th class="num">% del total</th><th class="num">Promedio por agente</th><th>Agente más expuesto</th></tr></thead>
     <tbody>
-        {% for b in buckets %}
-        <tr><td>{{ b.label }}</td><td class="num">{{ b.count }}</td></tr>
-        {% endfor %}
+        <tr>
+            <td>Asociados ACCE <span class="star">★</span></td>
+            <td class="num">{{ acce_noacce.acce.n }}</td>
+            <td class="num">{{ "%.1f"|format(acce_noacce.acce.pct_agentes) }}%</td>
+            <td class="num">{{ acce_noacce.acce.sobrecosto }}</td>
+            <td class="num">{{ "%.2f"|format(acce_noacce.acce.pct_sobrecosto) }}%</td>
+            <td class="num">{{ acce_noacce.acce.promedio }}</td>
+            <td>{{ acce_noacce.acce.top_agente }} <span class="star">★</span></td>
+        </tr>
+        <tr>
+            <td>No asociados</td>
+            <td class="num">{{ acce_noacce.no_acce.n }}</td>
+            <td class="num">{{ "%.1f"|format(acce_noacce.no_acce.pct_agentes) }}%</td>
+            <td class="num">{{ acce_noacce.no_acce.sobrecosto }}</td>
+            <td class="num">{{ "%.2f"|format(acce_noacce.no_acce.pct_sobrecosto) }}%</td>
+            <td class="num">{{ acce_noacce.no_acce.promedio }}</td>
+            <td>{{ acce_noacce.no_acce.top_agente }}</td>
+        </tr>
+        <tr class="total">
+            <td>Total del mercado</td>
+            <td class="num">{{ market.n }}</td>
+            <td class="num">100.0%</td>
+            <td class="num">{{ acce_noacce.total }}</td>
+            <td class="num">100.00%</td>
+            <td class="num">—</td>
+            <td>—</td>
+        </tr>
     </tbody>
 </table>
+<p class="small-note">Montos expresados en pesos colombianos (COP). El desglose completo por agente, con su
+sobrecosto en COP, se presenta en el ranking de la sección 5.</p>
 
-<div class="chart small"><img src="{{ assets.distribucion }}"><div class="caption">Figura 7. Distribución de agentes por rango de pérdida.</div></div>
-
-<div class="callout warning">
-    <div class="callout-title">⚠ Pérdida media-alta generalizada</div>
-    La totalidad de los {{ market.n }} agentes analizados presenta una pérdida por incobrabilidad en el rango
-    medio-alto (≥5%). Ninguno registra pérdida moderada o baja, lo que confirma el carácter estructural del
-    riesgo trasladado al eslabón de comercialización independiente.
+<div class="callout quote">
+    <div class="callout-title">Lectura para ACCE</div>
+    Con solo el {{ "%.1f"|format(acce_noacce.acce.pct_agentes) }}% de los agentes, los Asociados ACCE
+    soportan el <strong>{{ "%.2f"|format(acce_noacce.acce.pct_sobrecosto) }}%</strong> del sobrecosto total
+    del mercado ({{ acce_noacce.acce.sobrecosto }}), con una exposición promedio por agente
+    ({{ acce_noacce.acce.promedio }}) notablemente superior a la de los no asociados. Esto confirma que la
+    carga del esquema transitorio del PUI recae de forma desproporcionada sobre los comercializadores
+    independientes que representa la asociación.
 </div>
 
 <!-- ================= CONCLUSIONES ================= -->
@@ -252,7 +340,11 @@ reduce a medida que el esquema reconoce la incobrabilidad.
 <ol>
     <li><strong>El PUI es financieramente deficitario en el agregado:</strong> el mercado, en conjunto, deja de recuperar una porción significativa del PUI facturado por la incobrabilidad de los usuarios finales ({{ market.gap }}, {{ "%.2f"|format(market.pct_incob) }}%).</li>
     <li><strong>La cobertura por contratos es alta</strong> ({{ "%.2f"|format(market.pct_cobertura) }}%), lo que reduce la volatilidad de precios de compra.</li>
-    <li><strong>El sobrecosto se concentra:</strong> unos pocos agentes concentran la mayor parte de la pérdida financiera; las acciones de gestión de cartera tienen alto impacto si se focalizan en ellos.</li>
+    <li><strong>El sobrecosto se concentra en los Asociados ACCE:</strong> los {{ acce_noacce.acce.n }} asociados
+    ({{ "%.1f"|format(acce_noacce.acce.pct_agentes) }}% de los agentes) soportan el
+    <strong>{{ "%.2f"|format(acce_noacce.acce.pct_sobrecosto) }}%</strong> del sobrecosto total del mercado
+    ({{ acce_noacce.acce.sobrecosto }}), con una exposición promedio por agente superior a la del resto.
+    Las acciones de gestión de cartera tienen alto impacto si se focalizan en esos agentes.</li>
     <li><strong>El forecast permite anticipar el faltante,</strong> habilitando planes de cobertura de caja y recaudo proactivo.</li>
     <li><strong>El esquema transitorio es la causa del sobrecosto,</strong> no una condición inherente del servicio: remunerar el riesgo de cartera lo eliminaría.</li>
 </ol>

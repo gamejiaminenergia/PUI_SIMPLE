@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% include 'partials/_head.html' %}
+    {% include 'partials/_styles.html' %}
+    <style>
+        /* ===== Impresión: Anexo PUI por Agente ===== */
+        @page {
+            size: letter;
+            margin: 12mm 12mm 15mm 12mm;
+            @bottom-center {
+                content: "ACCE — Informe PUI {{ kpis.agente_code }} · Página " counter(page) " de " counter(pages);
+                font-family: 'Outfit', sans-serif;
+                font-size: 8pt;
+                color: #94a3b8;
+            }
+        }
+        html, body { background: #ffffff !important; }
+        body {
+            padding: 0 !important;
+            background-image: none !important;
+        }
+        /* Solo secciones Dashboard y Metodología visibles */
+        .nav-tabs { display: none !important; }
+        #auditMatrix, #fullDataset { display: none !important; }
+        #dashboard, #methodology { display: block !important; }
+        .tab-content {
+            display: block !important;
+            padding: 0 !important;
+        }
+        .container { max-width: 100%; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #013A6F;
+        }
+        .header-title h1 { font-size: 1.6rem; }
+        .header-title p { font-size: 0.8rem; }
+        /* Evitar cortes en medio de tarjetas */
+        .kpi-card, .chart-card, .section-card, .step-card, .params-panel {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .chart-card, .section-card, .kpi-grid, .params-panel { margin-bottom: 1.4rem; }
+        .chart-wrapper { height: 360px; }
+        .section-card { padding: 1.4rem; }
+        .chart-explanation {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+            color: #334155;
+        }
+        .formula-box { overflow: hidden !important; }
+        footer { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% include 'partials/_header.html' %}
+        {% include 'partials/_dashboard.html' %}
+    </div>
+    <script>
+        {% include 'partials/_scripts_data.html' %}
+        {% include 'partials/_scripts_charts_series.html' %}
+        {% include 'partials/_scripts_charts_benchmark.html' %}
+    </script>
+    <script>
+        // Forzar visibilidad de la sección antes de imprimir
+        window.addEventListener('load', function() {
+            ['dashboard'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) { el.classList.add('active'); el.style.display = 'block'; }
+            });
+        });
+    </script>
+</body>
+</html>

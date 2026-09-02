@@ -123,6 +123,7 @@
                     </div>
                 </div>
 
+                {% if not anexo_only %}
                 <!-- CHART 4: Sobrecosto por Incobrabilidad y Flujo Neto de Caja -->
                 <div class="chart-card">
                     <div class="chart-card-header">
@@ -138,6 +139,7 @@
                         <canvas id="chartSobrecostoFlujo"></canvas>
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <!-- ROW 2: Benchmark Sobrecostos PUI por Agente (Config) -->

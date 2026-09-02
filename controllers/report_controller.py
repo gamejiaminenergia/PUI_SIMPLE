@@ -23,6 +23,7 @@ BUSINESS_COLUMN_MAP = {
     "agente_code": "Código Agente",
     "agente_name": "Nombre Comercializador",
     "rol_pui": "Rol Regulado PUI (CIOR/CNIOR)",
+    "es_asociado_acce": "Asociado ACCE (Sí/No)",
     "mercado_code": "Código Mercado Comercialización",
     "mercado_name": "Mercado Comercialización",
     "mes": "Período (Mes)",
@@ -124,6 +125,11 @@ class ReportController:
 
         logger.info("Datos: raw_data=%d filas | daily_df=%d filas",
                     len(raw_data), len(daily_df))
+
+        # Marcar Asociados ACCE en cada fila (usado por CSV, dataset y resumen)
+        from config.acce import es_asociado_acce
+        for r in raw_data:
+            r["es_asociado_acce"] = "Sí" if es_asociado_acce(str(r.get("agente_code", ""))) else "No"
 
         results = {
             "kpis": kpis,

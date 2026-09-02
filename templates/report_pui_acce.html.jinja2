@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe PUI — ACCE</title>
+</head>
+<body>
+
+<div class="divider"></div>
+
+<!-- ================= PORTADA ================= -->
+<div class="cover">
+    <img class="logo" src="{{ assets.logo }}" alt="ACCE">
+    <div class="title">Impacto del Prestador de Última Instancia (PUI) en los Comercializadores Independientes del MEM</div>
+    <div class="subtitle">Análisis técnico del esquema transitorio de la {{ meta.resolucion }} (Artículos 11 y 12) y su efecto sobre los CNIOR</div>
+    <div class="rule"></div>
+    <div class="client">{{ meta.acce }}</div>
+    <div class="date">{{ meta.fecha }}</div>
+    <div class="footer-note">Documento de análisis y soporte regulatorio — Confidencial</div>
+</div>
+
+<!-- ================= RESUMEN EJECUTIVO ================= -->
+<h2>1. Resumen ejecutivo</h2>
+<p class="intro">
+Este estudio, encargado por la <strong>ACCE — Asociación Colombiana de Comercializadores de Energía</strong>,
+cuantifica el impacto del mecanismo <strong>PUI (Prestador de Última Instancia)</strong> sobre sus asociados:
+los <strong>comercializadores independientes del MEM</strong> (CNIOR). El análisis cubre <strong>{{ market.n }}
+comercializadores</strong> del mercado eléctrico colombiano y combina el histórico con un pronóstico diario
+(Google TimesFM 3.0) para el horizonte {{ meta.fecha_corta }} — 2027.
+</p>
+<p>
+La conclusión central: en el esquema transitorio de la resolución, el mercado en su conjunto deja de recuperar
+<strong>{{ market.gap }}</strong> del PUI facturado — equivalente al <strong>{{ "%.2f"|format(market.pct_incob) }}%</strong>
+del total girado al operador — porque los CNIOR deben <em>girar lo facturado aunque no lo hayan recaudado</em>.
+</p>
+
+<div class="kpi-grid">
+    <div class="kpi-card negative"><div class="value">{{ market.gap }}</div><div class="label">Faltante de caja (incobrabilidad)</div></div>
+    <div class="kpi-card negative"><div class="value">{{ "%.2f"|format(market.pct_incob) }}%</div><div class="label">Tasa de incobrabilidad</div></div>
+    <div class="kpi-card positive"><div class="value">{{ "%.2f"|format(market.pct_cobertura) }}%</div><div class="label">Cobertura por contratos</div></div>
+    <div class="kpi-card"><div class="value">{{ market.n }}</div><div class="label">Agentes analizados</div></div>
+    <div class="kpi-card"><div class="value">{{ market.n_acce }}</div><div class="label">Asociados ACCE afectados ★</div></div>
+    <div class="kpi-card wide"><div class="value">{{ market.tot_egreso }}</div><div class="label">Giros obligatorios totales al CIOR (ENEL)</div></div>
+</div>
+
+<div class="callout quote">
+    <div class="callout-title">Tesis del cliente (ACCE)</div>
+    La norma no discrimina de forma directa, pero al aplicar una regla homogénea —<em>“todos pagan
+    independientemente del recaudo”</em>— a agentes con condiciones heterogéneas, <strong>asfixia financieramente
+    al eslabón más débil</strong> (el CNIOR) y favorece indirectamente a los operadores integrados, concentrando
+    aún más el mercado.
+</div>
+
+<!-- ================= CONTEXTO REGULATORIO ================= -->
+<h2>2. Contexto regulatorio</h2>
+<p>
+El diseño de los Artículos 11 y 12 de la {{ meta.resolucion }} (publicada el 10 de agosto de 2026) plantea un
+escenario de análisis crítico. Los mecanismos transitorios implementados antes de que opere el mercado
+competitivo generan <strong>asimetrías regulatorias</strong> e impactos financieros profundos que afectan de forma
+diferenciada a los CNIOR.
+</p>
+
+<h3>{{ meta.articulo_11 }}</h3>
+<p>
+Obliga a los comercializadores no integrados a aplicar una tarifa regulada <em>ex-ante</em> a los usuarios
+huérfanos, antes de que se defina un precio por libre competencia. Si este valor no cubre el costo real de la
+energía en bolsa (periodos de escasez o hidrología crítica), el comercializador entrante asume un
+<strong>déficit de caja inmediato</strong>.
+</p>
+
+<h3>{{ meta.articulo_12 }}</h3>
+<p>
+Define la obligatoriedad de pagar los valores asumidos por el PUI al operador de red, independientemente de si
+el comercializador recauda o no dichos valores. Establece el principio de <strong>“pague lo facturado, no lo
+recaudado”</strong>: el comercializador debe transferir los costos asignados al Operador de Red (OR) así no logre
+recaudar el dinero de los usuarios.
+</p>
+
+<h3>Asimetrías en contra de los CNIOR</h3>
+<div class="callout warning">
+    <div class="callout-title">⚠ Riesgo estructural para el comercializador independiente</div>
+    <ul>
+        <li><strong>Caja garantizada para el OR:</strong> el CIOR (ENEL) recibe los giros del PUI sí o sí, sin asumir pérdida por incobrabilidad.</li>
+        <li><strong>Riesgo de cartera 100% en el CNIOR:</strong> el comercializador no integrado asume todo el riesgo de no pago, incluso en zonas que ya provienen de un comercializador que fracasó por problemas de cartera.</li>
+        <li><strong>Ausencia de subsidio cruzado:</strong> a diferencia de los grupos integrados, un CNIOR no cuenta con ingresos de generación o distribución para compensar el déficit; depende enteramente del recaudo diario.</li>
+    </ul>
+</div>
+
+<div class="callout tip">
+    <div class="callout-title">✔ Lectura para ACCE</div>
+    La concentración del riesgo en el eslabón independiente desincentiva la participación de los CNIOR en los
+    procesos de salvamento de usuarios, consolidando la posición de los operadores incumbentes integrados.
+</div>
+
+<!-- ================= IMPACTO GLOBAL ================= -->
+<h2>3. Impacto global del PUI (agregado de mercado)</h2>
+<table class="data">
+    <thead><tr><th>Indicador global</th><th class="num">Valor</th></tr></thead>
+    <tbody>
+        <tr><td>Valor total PUI de mercado</td><td class="num">{{ market.tot_pui_cop }}</td></tr>
+        <tr><td>Giros obligatorios totales al CIOR</td><td class="num">{{ market.tot_egreso }}</td></tr>
+        <tr><td>Recaudo real efectivo total</td><td class="num">{{ market.tot_recaudo }}</td></tr>
+        <tr class="total"><td>Faltante de caja (gap de recaudo)</td><td class="num">{{ market.gap }}</td></tr>
+        <tr><td>Sobrecosto por incobrabilidad acumulado</td><td class="num">{{ market.tot_sobrecosto }}</td></tr>
+        <tr><td>Flujo neto de caja PUI (agregado)</td><td class="num">{{ market.flujo }}</td></tr>
+    </tbody>
+</table>
+
+<div class="chart wide"><img src="{{ assets.impacto_global }}"><div class="caption">Figura 1. Giros, recaudo y sobrecosto agregados del mercado (COP).</div></div>
+
+<div class="callout warning">
+    <div class="callout-title">⚠ El sistema financia el PUI con recursos propios</div>
+    En el agregado, el mercado deja de recuperar <strong>{{ market.gap }}</strong> del PUI facturado
+    ({{ "%.2f"|format(market.pct_incob) }}% del total girado al operador). El flujo neto de caja agregado es
+    <strong>negativo</strong>: el sistema, en conjunto, está financiando el mecanismo con recursos propios.
+</div>
+
+<!-- ================= COBERTURA ================= -->
+<h2>4. Cobertura de demanda — contratos vs bolsa spot</h2>
+<table class="data">
+    <thead><tr><th>Fuente de energía</th><th class="num">Valor</th><th class="num">Participación</th></tr></thead>
+    <tbody>
+        <tr><td>Cobertura por contratos bilaterales</td><td class="num">{{ market.tot_contratos }}</td><td class="num">{{ "%.2f"|format(market.pct_cobertura) }}%</td></tr>
+        <tr><td>Exposición en bolsa spot</td><td class="num">{{ market.tot_bolsa }}</td><td class="num">{{ "%.2f"|format(market.pct_exposicion) }}%</td></tr>
+    </tbody>
+</table>
+
+<div class="chart small"><img src="{{ assets.cobertura }}"><div class="caption">Figura 2. Composición de la cobertura de demanda agregada.</div></div>
+
+<div class="callout tip">
+    <div class="callout-title">✔ Fortaleza del mercado</div>
+    La alta cobertura por contratos bilaterales ({{ "%.2f"|format(market.pct_cobertura) }}%) reduce la exposición
+    de los comercializadores a la volatilidad del precio spot (PMEM), mitigando el riesgo de compra de energía.
+</div>
+
+<!-- ================= RANKING ================= -->
+<h2>5. Ranking de agentes por sobrecosto acumulado</h2>
+<p>Los <strong>{{ market.n_acce }} Asociados ACCE</strong> se identifican con <span class="star">★</span>. El agente
+más expuesto es <strong>{{ top1.agente }} ({{ top1.nombre }})</strong>, que concentra
+{{ "%.2f"|format(top1.share) }}% del sobrecosto total del mercado.</p>
+
+<div class="chart full"><img src="{{ assets.ranking }}"><div class="caption">Figura 3. Ranking completo de los {{ market.n }} agentes por sobrecosto acumulado (★ = Asociado ACCE).</div></div>
+
+<table class="data">
+    <thead><tr><th>#</th><th>Código</th><th>Nombre</th><th>Rol</th><th class="num">Sobrecosto</th><th class="num">Flujo neto</th><th class="num">Pérdida %</th><th>ACCE</th></tr></thead>
+    <tbody>
+        {% for r in ranking %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.agente }}{% if r.es_asociado %}<span class="star"> ★</span>{% endif %}</td>
+            <td>{{ r.nombre }}</td>
+            <td>{{ r.rol }}</td>
+            <td class="num">{{ r.sobrecosto|fmt_cop }}</td>
+            <td class="num">{{ r.flujo|fmt_cop }}</td>
+            <td class="num">{{ "%.2f"|format(r.pct_perdida) }}%</td>
+            <td class="{{ 'acce-true' if r.es_asociado else '' }}">{{ 'Sí' if r.es_asociado else 'No' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p class="small-note">La tabla incluye el ranking completo de los {{ market.n }} agentes analizados, de modo que todos los comercializadores del estudio quedan reflejados en el informe.</p>
+
+<!-- ================= MAPA ================= -->
+<h2>6. Distribución geográfica del PUI</h2>
+<p>
+La obligación PUI recae sobre la demanda comercial de los CNIOR en todo el territorio. El mapa siguiente
+muestra la <strong>demanda comercial de los CNIOR por departamento</strong> (GWh), agregada desde los mercados
+de comercialización analizados, reflejando dónde se concentra la exposición de los asociados.
+</p>
+
+<div class="chart map"><img src="{{ assets.mapa }}"><div class="caption">Figura 4. Demanda comercial de los CNIOR por departamento (GWh). Los bloques regionales Caribe se distribuyen entre los departamentos de la costa.</div></div>
+
+<div class="callout warning">
+    <div class="callout-title">⚠ Riesgo de cartera en áreas especiales</div>
+    En el esquema transitorio, el costo de incobrabilidad de las <strong>áreas especiales o subnormales</strong>
+    (donde las pérdidas de energía y la morosidad son elevadas) se carga en su totalidad al CNIOR, sin que el
+    cargo aprobado lo remunere.
+</div>
+
+<!-- ================= TRAYECTORIA ================= -->
+<h2>7. Trayectoria temporal (histórico + pronóstico)</h2>
+<p>
+El pronóstico diario con Google TimesFM 3.0 permite proyectar el comportamiento del sobrecosto y del flujo neto
+de caja agregado hasta 2027. La gráfica evidencia el <strong>despegue del faltante</strong> en el horizonte de
+pronóstico.
+</p>
+
+<div class="chart wide"><img src="{{ assets.temporal }}"><div class="caption">Figura 5. Sobrecosto y flujo neto mensual agregado — histórico y pronóstico TimesFM.</div></div>
+
+<div class="callout tip">
+    <div class="callout-title">✔ Valor del pronóstico</div>
+    Anticipar el faltante habilita <strong>planes de cobertura de caja y de gestión de recaudo proactiva</strong>
+    para los comercializadores independientes.
+</div>
+
+<!-- ================= ESCENARIOS ================= -->
+<h2>8. Esquema transitorio vs mecanismo competitivo definitivo</h2>
+<p>
+El mecanismo competitivo definitivo desmonta el esquema transitorio asimétrico: el precio se fija por oferta
+ganadora en subasta, la participación es voluntaria y el <strong>riesgo de cartera pasa a ser un componente
+remunerado</strong> del cargo aprobado. El cuadro siguiente muestra cómo el faltante de caja de los CNIOR se
+reduce a medida que el esquema reconoce la incobrabilidad.
+</p>
+
+<table class="data">
+    <thead><tr><th>Escenario</th><th class="num">Factor recaudo</th><th class="num">Faltante de caja</th><th class="num">% del giro al CIOR</th></tr></thead>
+    <tbody>
+        {% for e in escenarios %}
+        <tr>
+            <td>{{ e.label }}</td>
+            <td class="num">{{ "%.0f"|format(e.factor*100) }}%</td>
+            <td class="num">{{ e.faltante|fmt_cop }}</td>
+            <td class="num">{{ "%.2f"|format(e.pct) }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="chart wide"><img src="{{ assets.escenarios }}"><div class="caption">Figura 6. Reducción del faltante de caja según el reconocimiento del riesgo de cartera.</div></div>
+
+<div class="callout quote">
+    <div class="callout-title">Interpretación para ACCE</div>
+    El sobrecosto por incobrabilidad <strong>no es un costo inherente del servicio</strong>, sino la consecuencia
+    de un diseño transitorio que traslada todo el riesgo al CNIOR. Un mecanismo competitivo que remunere el
+    riesgo de cartera reduciría el faltante agregado de forma sustancial (hasta <strong>$0</strong> con
+    neutralidad competitiva), nivelando la cancha de juego frente a los operadores integrados.
+</div>
+
+<!-- ================= DISTRIBUCION ================= -->
+<h2>9. Distribución de la pérdida por incobrabilidad</h2>
+<table class="data">
+    <thead><tr><th>Rango de pérdida</th><th class="num"># Agentes</th></tr></thead>
+    <tbody>
+        {% for b in buckets %}
+        <tr><td>{{ b.label }}</td><td class="num">{{ b.count }}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="chart small"><img src="{{ assets.distribucion }}"><div class="caption">Figura 7. Distribución de agentes por rango de pérdida.</div></div>
+
+<div class="callout warning">
+    <div class="callout-title">⚠ Pérdida media-alta generalizada</div>
+    La totalidad de los {{ market.n }} agentes analizados presenta una pérdida por incobrabilidad en el rango
+    medio-alto (≥5%). Ninguno registra pérdida moderada o baja, lo que confirma el carácter estructural del
+    riesgo trasladado al eslabón de comercialización independiente.
+</div>
+
+<!-- ================= CONCLUSIONES ================= -->
+<h2>10. Conclusiones y recomendaciones</h2>
+<h3>Conclusiones</h3>
+<ol>
+    <li><strong>El PUI es financieramente deficitario en el agregado:</strong> el mercado, en conjunto, deja de recuperar una porción significativa del PUI facturado por la incobrabilidad de los usuarios finales ({{ market.gap }}, {{ "%.2f"|format(market.pct_incob) }}%).</li>
+    <li><strong>La cobertura por contratos es alta</strong> ({{ "%.2f"|format(market.pct_cobertura) }}%), lo que reduce la volatilidad de precios de compra.</li>
+    <li><strong>El sobrecosto se concentra:</strong> unos pocos agentes concentran la mayor parte de la pérdida financiera; las acciones de gestión de cartera tienen alto impacto si se focalizan en ellos.</li>
+    <li><strong>El forecast permite anticipar el faltante,</strong> habilitando planes de cobertura de caja y recaudo proactivo.</li>
+    <li><strong>El esquema transitorio es la causa del sobrecosto,</strong> no una condición inherente del servicio: remunerar el riesgo de cartera lo eliminaría.</li>
+</ol>
+
+<h3>Recomendaciones para la interlocución con la CREG</h3>
+<div class="callout tip">
+    <div class="callout-title">✔ Posición de ACCE</div>
+    <ul>
+        <li>Solicitar que el <strong>riesgo de cartera sea un componente remunerado</strong> dentro del cargo del PUI (neutralidad competitiva).</li>
+        <li>Promover la <strong>nivelación de la cancha</strong>: si los CNIOR no encuentran garantías para competir, la responsabilidad de última instancia debe recaer por defecto en el CIOR integrado.</li>
+        <li>Focalizar <strong>programas de gestión de cartera</strong> en los agentes de mayor exposición identificados en este estudio.</li>
+        <li>Usar el <strong>pronóstico de faltante</strong> como insumo para diseñar mecanismos de cobertura de caja.</li>
+    </ul>
+</div>
+
+<!-- ================= METODOLOGIA ================= -->
+<h2 class="page-break">11. Metodología y modelo de cálculo</h2>
+<p>
+Modelo regulatorio descrito en la {{ meta.resolucion }} (Artículo 11: traslado del valor del PUI a los usuarios
+regulados antes del mecanismo competitivo; Artículo 12: recaudo y liquidación del costo asumido, principio de
+“pague lo facturado, no lo recaudado”). A continuación se resumen las ecuaciones en orden lógico de cálculo.
+</p>
+
+<h3>Paso 0 — Cobertura de demanda</h3>
+<pre>VR_agente = Energía_Contratos + Energía_Bolsa_Spot   [kWh]
+%Cobertura_Contratos = (Energía_Contratos / VR_agente) × 100
+%Exposición_Bolsa    = (Energía_Bolsa_Spot / VR_agente) × 100</pre>
+
+<h3>Paso 3 — Volumen de áreas especiales (VPUI)</h3>
+<pre>VPUI_m-1 = VR_mercado_m-1 × %_áreas_especiales   [kWh]   (% = 10%)</pre>
+
+<h3>Paso 4 — Tarifa de incobrabilidad (esquema transitorio)</h3>
+<pre>CRPUI_unitario_m = (rcpui × VPUI_m-1) / (VR_m-1 × CU_m-1)   [COP/kWh]
+  rcpui = $0.030 COP/kWh (prima de riesgo de cartera)</pre>
+
+<h3>Pasos 6-8 — Giro al CIOR, recaudo y sobrecosto</h3>
+<pre>Egreso_Giro_CIOR = Giro_mercado × (VR_CNIOR / VR_CNIORs)     [COP]
+Recaudo_Efectivo = Egreso_Giro_CIOR × Factor_Recaudo (92%)   [COP]
+Sobrecosto = Egreso_Giro_CIOR × (1 - Factor_Recaudo)          [COP]</pre>
+
+<h3>Paso 9 — Flujo neto de caja</h3>
+<pre>Flujo_Neto_Caja = Recaudo_Efectivo - Egreso_Giro_CIOR   [COP]
+  Si &lt; 0 → el agente financia la diferencia</pre>
+
+<div class="callout tip">
+    <div class="callout-title">✔ Trazabilidad</div>
+    Cada agente cuenta con un archivo de auditoría de fórmulas
+    (<code>output/&lt;SIGLA&gt;/pui_auditoria_formulas.csv</code>) y un dataset mensual completo
+    (<code>pui_dataset_unificado.csv</code>, 49 columnas) que permite reproducir cada cálculo.
+</div>
+
+<h3>Fuentes de datos</h3>
+<ul>
+    <li><strong>Datos fuente:</strong> PostgreSQL (BD del SIN/XM), tablas <code>fact_hourly_*</code> y dimensiones <code>dim_*</code>.</li>
+    <li><strong>Pronóstico:</strong> Google TimesFM 3.0 (modo offline).</li>
+    <li><strong>Parámetros regulatorios:</strong> {{ meta.resolucion }} (Artículos 11 y 12).</li>
+    <li><strong>Asociados ACCE:</strong> listado oficial del cliente (<code>docs/acce.csv</code>, CODE=0).</li>
+</ul>
+
+<!-- ================= GLOSARIO ================= -->
+<h2>12. Glosario de términos</h2>
+<dl class="glossary">
+    <dt>PUI — Prestador de Última Instancia</dt>
+    <dd>Mecanismo transitorio por el cual los comercializadores asumen la atención de usuarios huérfanos y giran el valor del servicio al CIOR antes de que opere el mecanismo competitivo (Artículos 11 y 12).</dd>
+    <dt>CIOR — Comercializador Incumbente del Operador de Red</dt>
+    <dd>Agente designado para recibir los giros del PUI. En este estudio, ENEL Colombia S.A. E.S.P.</dd>
+    <dt>CNIOR — Comercializador No Integrado con el Operador de Red</dt>
+    <dd>Comercializadores puros del MEM (sin generación propia) que compran toda su energía en el mercado mayorista y asumen el riesgo de incobrabilidad sobre los giros.</dd>
+    <dt>ACCE — Asociación Colombiana de Comercializadores de Energía</dt>
+    <dd>Cliente del estudio; representa los intereses de los comercializadores independientes y usa este análisis como soporte regulatorio ante la CREG.</dd>
+    <dt>Sobrecosto</dt>
+    <dd>Diferencia entre el monto total que el agente debe girar al CIOR y el que efectivamente recauda. Representa la pérdida financiera por incobrabilidad.</dd>
+    <dt>Flujo neto de caja</dt>
+    <dd>Egresos por giros al CIOR menos recaudo efectivo. Si es negativo, el agente financia la diferencia.</dd>
+    <dt>Cobertura de demanda</dt>
+    <dd>% de la demanda cubierta por contratos bilaterales vs. compra en bolsa spot. A mayor cobertura, menor volatilidad.</dd>
+    <dt>Áreas especiales</dt>
+    <dd>Zonas geográficas donde el PUI aplica sobre un % de la demanda (por defecto 10%), con mayor riesgo de cartera.</dd>
+    <dt>Bolsa spot / PMEM</dt>
+    <dd>Mercado diario de compra-venta de energía; el precio de referencia del MEM.</dd>
+    <dt>MEM / SIN / CREG</dt>
+    <dd>Mercado Eléctrico Mayorista · Sistema Interconectado Nacional (operado por XM) · Comisión de Regulación de Energía y Gas.</dd>
+    <dt>TimesFM</dt>
+    <dd>Google TimesFM 3.0: modelo de IA de pronóstico de series temporales usado para proyectar demanda y cobertura.</dd>
+</dl>
+
+<!-- ================= ANEXO ================= -->
+<h2 class="page-break">13. Anexo — Agentes analizados (listado completo)</h2>
+<p>Los {{ market.n }} comercializadores del MEM incluidos en el análisis. El símbolo <span class="star">★</span>
+identifica a los {{ market.n_acce }} Asociados ACCE.</p>
+<table class="data agent-grid">
+    <tbody>
+        {% set row = [] %}
+        {% for a in all_agents %}
+            {% if loop.index0 % 6 == 0 %}<tr>{% endif %}
+            <td>{% if a in ['ASCC','CBNC','DEPC','DLRC','NRCC','EGTC','EYCC','ETTC','EXIC','FERC','ITLC','JRDC','MERC','NEUC','QIEC','RTQC','SFEC','SCEC','GNCC'] %}{{ a }}<span class="star">★</span>{% else %}{{ a }}{% endif %}</td>
+            {% if loop.index0 % 6 == 5 %}</tr>{% endif %}
+        {% endfor %}
+        {% set rem = (all_agents|length) % 6 %}
+        {% if rem %}
+            {% for i in range(6 - rem) %}<td></td>{% endfor %}</tr>
+        {% endif %}
+    </tbody>
+</table>
+<p class="small-note">Cobertura temporal del análisis: {{ cobertura_temporal.hist }} agentes con histórico completo,
+{{ cobertura_temporal.fcst }} con pronóstico TimesFM.</p>
+
+</body>
+</html>

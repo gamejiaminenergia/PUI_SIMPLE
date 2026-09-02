@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "purpose": "Especificación para que un asistente de IA de programación genere una plantilla Jinja2 + WeasyPrint que produzca un informe PDF con el branding del cliente ACCE.",
+    "client": "ACCE - Asociación Colombiana de Comercializadores de Energía",
+    "client_url": "https://www.acce.com.co/",
+    "source_of_truth_note": "Los valores de color exactos NO fueron extraídos con un color-picker real del logo/sitio (no hubo acceso de red al asset). Antes de fijarlos como definitivos, el asistente de código debe: 1) pedir al usuario el logo en PNG/SVG o capturas de pantalla del sitio, 2) extraer los hex reales con una librería (ej. colorthief, PIL, o leer directamente los valores del SVG si es vectorial), 3) reemplazar los placeholders marcados como 'verificar' en este JSON.",
+    "stack_ya_usado_por_el_usuario": ["Jinja2>=3.1", "WeasyPrint>=60.0"]
+  },
+
+  "brand": {
+    "logo": {
+      "source_url": "https://www.acce.com.co/wp-content/uploads/2022/06/Logo-cabecera-2026.png",
+      "format": "PNG (cabecera). Existe también un asset 'a-fondo-naranjaV2.svg' usado como favicon/tile, lo que confirma naranja como color de marca.",
+      "usage": "Debe ir en el header de la primera página y opcionalmente como marca de agua ligera o ícono pequeño en el footer de páginas siguientes.",
+      "min_clear_space_px": 24
+    },
+    "color_palette": {
+      "status": "provisional - verificar contra el logo real antes de producción",
+      "primary_orange": {
+        "hex_placeholder": "#E8720C",
+        "role": "Color primario de marca (acento, títulos, línea de header/footer, iconografía). Confirmado que 'naranja' es el color de identidad por el naming del asset oficial del sitio.",
+        "verificar": true
+      },
+      "secondary_dark": {
+        "hex_placeholder": "#1F2A33",
+        "role": "Texto principal, fondos de encabezados de sección, contraste. Sector energía en Colombia suele combinar naranja con azul oscuro / grafito para transmitir confianza institucional.",
+        "verificar": true
+      },
+      "neutral_background": "#FFFFFF",
+      "neutral_light_gray": "#F4F4F2",
+      "text_body": "#2B2B2B",
+      "success_or_data_accent": "#2E7D32",
+      "warning_or_data_accent": "#C62828",
+      "table_row_alt": "#FBEFE4"
+    },
+    "typography": {
+      "primary_font_family": "Verificar en el sitio (usa WordPress/Elementor con Google Fonts); si no se puede confirmar, usar una sans-serif institucional similar: 'Inter' o 'Nunito Sans'.",
+      "fallback_stack": "'Inter', 'Nunito Sans', 'Helvetica Neue', Arial, sans-serif",
+      "h1_size_pt": 20,
+      "h2_size_pt": 15,
+      "h3_size_pt": 12,
+      "body_size_pt": 10.5,
+      "caption_size_pt": 8.5,
+      "line_height": 1.4,
+      "note": "WeasyPrint no siempre soporta bien fuentes variables; empaquetar .ttf/.otf estáticas en /fonts y declararlas con @font-face en el CSS."
+    },
+    "tone": "Institucional, técnico-regulatorio, sobrio, confiable. Es un gremio (asociación sin ánimo de lucro) del sector energético colombiano, no una marca de consumo — evitar diseño 'juguetón'; priorizar claridad de datos y jerarquía tipográfica clara."
+  },
+
+  "pdf_document_spec": {
+    "engine": "WeasyPrint",
+    "templating": "Jinja2",
+    "page": {
+      "size": "Letter",
+      "orientation": "portrait",
+      "margins_mm": {"top": 25, "bottom": 20, "right": 18, "left": 18},
+      "running_header": {
+        "left": "Logo ACCE (pequeño, 28mm ancho máx)",
+        "right": "Título del informe + fecha de generación",
+        "divider": "línea de 1.5pt en primary_orange"
+      },
+      "running_footer": {
+        "left": "Nombre del informe / confidencialidad si aplica",
+        "right": "Número de página (page counter de CSS: 'Página X de Y')",
+        "divider": "línea de 0.5pt en neutral_light_gray"
+      }
+    },
+    "css_paged_media_notes": [
+      "Usar @page con márgenes definidos y @page :first para portada sin header/footer.",
+      "Usar 'counter(page)' y 'counter(pages)' para numeración.",
+      "Definir orphans/widows: 3 para evitar líneas sueltas en cortes de página.",
+      "Evitar 'page-break-inside: avoid' en tablas largas; en su lugar usar 'break-inside: avoid' por fila (tr) cuando sea posible."
+    ],
+    "sections": [
+      {
+        "name": "Portada",
+        "content": ["Logo grande centrado", "Título del informe", "Subtítulo/cliente destinatario", "Fecha", "Línea decorativa en primary_orange"]
+      },
+      {
+        "name": "Resumen ejecutivo",
+        "content": ["1 párrafo o bullets clave", "Posible bloque de KPIs destacados en tarjetas con fondo neutral_light_gray y borde superior primary_orange"]
+      },
+      {
+        "name": "Cuerpo del informe",
+        "content": ["Secciones con H2 en primary_orange o secondary_dark", "Tablas de datos con header en secondary_dark y texto blanco", "Gráficas (si aplica) generadas previamente como PNG/SVG e insertadas, respetando la paleta"]
+      },
+      {
+        "name": "Conclusiones / Recomendaciones",
+        "content": ["Lista numerada o con viñetas", "Bloque de contacto o próximos pasos"]
+      },
+      {
+        "name": "Anexos (opcional)",
+        "content": ["Tablas extendidas", "Fuentes de datos / metodología"]
+      }
+    ],
+    "components_reusable": [
+      "kpi_card: tarjeta con número grande + etiqueta, fondo claro, borde superior de color de marca",
+      "data_table: encabezado oscuro, filas alternas (table_row_alt), bordes finos 0.5pt",
+      "section_divider: línea horizontal delgada en primary_orange antes de cada H2",
+      "callout_box: caja con fondo neutral_light_gray y borde izquierdo 3pt en primary_orange para notas destacadas"
+    ]
+  },
+
+  "implementation_notes_for_coding_assistant": [
+    "Estructura recomendada: /templates/report.html.jinja2, /static/css/report.css, /static/fonts/, /static/img/logo.png, /scripts/build_pdf.py",
+    "El script build_pdf.py debe: render Jinja2 -> HTML string -> WeasyPrint HTML(string=...).write_pdf(target, stylesheets=[css]).",
+    "Parametrizar el contexto Jinja2 (cliente, fecha, secciones, tablas, KPIs) vía un dict o JSON de datos separado del branding, para poder reutilizar la plantilla con otros informes.",
+    "Antes de producción: confirmar hex reales del logo y, si es posible, la fuente tipográfica exacta usada en acce.com.co (inspeccionar CSS del sitio con devtools, buscar 'font-family' en los estilos de Elementor/Google Fonts).",
+    "Probar impresión con al menos: 1 tabla larga que cruce página, 1 imagen grande, y el header/footer en portada vs páginas internas, para validar los @page rules."
+  ]
+}

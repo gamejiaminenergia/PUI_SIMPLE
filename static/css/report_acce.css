@@ -1,0 +1,306 @@
+/* ============================================================
+   Informe PUI — ACCE | Hoja de estilos WeasyPrint
+   Paleta extraída del logo real (docs/logo.png):
+   azul institucional #013A6F · naranja #ED8A22
+   ============================================================ */
+
+/* --- Fuentes --- */
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Regular.ttf");
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Medium.ttf");
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-SemiBold.ttf");
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/Inter-Bold.ttf");
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* --- Página --- */
+@page {
+    size: Letter portrait;
+    margin: 25mm 18mm 20mm 18mm;
+
+    @top-left {
+        content: url("../img/logo_header.png");
+        width: 29mm;
+        height: auto;
+        vertical-align: bottom;
+    }
+    @top-right {
+        content: "Informe PUI — ACCE · " string(chapter, first);
+        font-family: "Inter", Arial, sans-serif;
+        font-size: 8pt;
+        color: #6b6b6b;
+        vertical-align: bottom;
+    }
+    @bottom-center {
+        content: counter(page) " de " counter(pages);
+        font-family: "Inter", Arial, sans-serif;
+        font-size: 8pt;
+        color: #8a8a8a;
+    }
+    @bottom-left {
+        content: "Confidencial — Uso interno ACCE";
+        font-family: "Inter", Arial, sans-serif;
+        font-size: 7pt;
+        color: #a0a0a0;
+    }
+}
+
+@page :first {
+    margin: 0mm;
+
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-center { content: none; }
+    @bottom-left { content: none; }
+}
+
+/* Divisor naranja bajo el encabezado (se repite en todas las páginas de contenido).
+   position:fixed es lo único fiable en WeasyPrint para una línea a lo ancho. */
+.divider {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1.5pt;
+    background: #ED8A22;
+}
+
+/* --- Base --- */
+html { font-size: 10.5pt; }
+body {
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.4;
+    color: #2B2B2B;
+    margin: 0;
+    padding: 0;
+}
+
+p { margin: 0 0 6pt 0; }
+ul, ol { margin: 4pt 0 8pt 0; padding-left: 16pt; }
+li { margin-bottom: 3pt; }
+
+h1, h2, h3, h4 {
+    font-family: "Inter", Arial, sans-serif;
+    color: #013A6F;
+    margin: 0;
+}
+
+h1 { font-size: 20pt; }
+h2 { font-size: 15pt; }
+h3 { font-size: 12pt; }
+h4 { font-size: 11pt; }
+
+h2 {
+    string-set: chapter content(text);
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    padding-bottom: 4pt;
+    border-bottom: 1.5pt solid #ED8A22;
+    orphans: 3;
+    widows: 3;
+    page-break-after: avoid;
+}
+h3 { margin-top: 12pt; margin-bottom: 6pt; orphans: 3; widows: 3; }
+
+.page-break { page-break-before: always; }
+
+/* --- Portada --- */
+.cover {
+    text-align: center;
+    padding: 62mm 20mm 0 20mm;
+    page-break-after: always;
+}
+.cover .logo { width: 88mm; margin-bottom: 24mm; }
+.cover .title {
+    font-size: 25pt;
+    font-weight: 700;
+    color: #013A6F;
+    line-height: 1.2;
+    margin-bottom: 10mm;
+}
+.cover .subtitle {
+    font-size: 12.5pt;
+    color: #2B2B2B;
+    max-width: 150mm;
+    margin: 0 auto 12mm auto;
+}
+.cover .rule {
+    width: 60mm;
+    height: 0;
+    border-top: 2.5pt solid #ED8A22;
+    margin: 0 auto 12mm auto;
+}
+.cover .client {
+    font-size: 11pt;
+    color: #6b6b6b;
+    margin-bottom: 5mm;
+}
+.cover .date {
+    font-size: 10pt;
+    color: #8a8a8a;
+}
+.cover .footer-note {
+    position: absolute;
+    bottom: 14mm;
+    width: 100%;
+    text-align: center;
+    font-size: 8pt;
+    color: #a0a0a0;
+}
+
+/* --- KPIs --- */
+.kpi-grid {
+    font-size: 0;               /* elimina espacios entre inline-block */
+    margin: 8pt 0 10pt 0;
+}
+.kpi-card {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 32.2%;
+    margin: 0 0.6% 6pt 0;
+    vertical-align: top;
+    background: #F4F4F2;
+    border-top: 3pt solid #ED8A22;
+    padding: 8pt 9pt;
+    border-radius: 2pt;
+}
+.kpi-card .value {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #013A6F;
+    font-family: "Inter", Arial, sans-serif;
+}
+.kpi-card .label {
+    font-size: 7.5pt;
+    color: #2B2B2B;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    margin-top: 2pt;
+}
+.kpi-card.negative .value { color: #C62828; }
+.kpi-card.positive .value { color: #2E7D32; }
+.kpi-card.wide { width: 32.2%; }
+
+/* --- Tablas --- */
+table.data {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8pt 0 10pt 0;
+    font-size: 8.5pt;
+}
+table.data thead th {
+    background: #013A6F;
+    color: #FFFFFF;
+    font-weight: 600;
+    text-align: left;
+    padding: 5pt 6pt;
+    border: 0.5pt solid #013A6F;
+}
+table.data tbody td {
+    padding: 4pt 6pt;
+    border: 0.5pt solid #D9D9D6;
+    vertical-align: top;
+}
+table.data tbody tr:nth-child(even) { background: #FBEFE4; }
+table.data tbody tr { break-inside: avoid; }
+table.data tbody tr.total td {
+    background: #013A6F;
+    color: #FFFFFF;
+    font-weight: 600;
+}
+table.data .num { text-align: right; white-space: nowrap; }
+table.data .star { color: #ED8A22; font-weight: 700; }
+table.data td.acce-true { color: #013A6F; font-weight: 600; }
+
+/* --- Callouts / tips / warnings --- */
+.callout {
+    background: #F4F4F2;
+    border-left: 3pt solid #ED8A22;
+    padding: 8pt 10pt;
+    margin: 8pt 0 10pt 0;
+    font-size: 9.5pt;
+}
+.callout .callout-title {
+    font-weight: 700;
+    color: #013A6F;
+    margin-bottom: 3pt;
+}
+.callout.warning { border-left-color: #C62828; }
+.callout.warning .callout-title { color: #C62828; }
+.callout.tip { border-left-color: #2E7D32; }
+.callout.tip .callout-title { color: #2E7D32; }
+.callout.quote { border-left-color: #013A6F; }
+
+/* --- Gráficas --- */
+.chart {
+    text-align: center;
+    margin: 10pt 0 12pt 0;
+    break-inside: avoid;
+}
+.chart img {
+    max-width: 100%;
+    height: auto;
+}
+.chart .caption {
+    font-size: 8pt;
+    color: #6b6b6b;
+    margin-top: 4pt;
+}
+.chart.small img { width: 70mm; }
+.chart.medium img { width: 100mm; }
+.chart.wide img { width: 130mm; }
+.chart.full img { width: 168mm; }
+.chart.map img { width: 110mm; }
+
+/* --- Anverso: resumen, glosario --- */
+.intro {
+    font-size: 10pt;
+    color: #2B2B2B;
+}
+.tag {
+    display: inline-block;
+    background: #ED8A22;
+    color: #FFFFFF;
+    font-size: 7.5pt;
+    font-weight: 600;
+    padding: 1.5pt 5pt;
+    border-radius: 2pt;
+    vertical-align: middle;
+}
+.tag.blue { background: #013A6F; }
+
+.glossary dt {
+    font-weight: 600;
+    color: #013A6F;
+    margin-top: 5pt;
+}
+.glossary dd { margin: 1pt 0 0 0; }
+
+.small-note {
+    font-size: 7.5pt;
+    color: #8a8a8a;
+}
+.agent-grid td {
+    font-size: 8pt;
+    padding: 2pt 6pt;
+    border: 0.5pt solid #D9D9D6;
+}
+.agent-grid .star { color: #ED8A22; }

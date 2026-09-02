@@ -11,6 +11,7 @@ BUSINESS_COLUMN_MAP = {
     "agente_code": "Código Agente",
     "agente_name": "Nombre Comercializador",
     "rol_pui": "Rol Regulado PUI (CIOR/CNIOR)",
+    "es_asociado_acce": "Asociado ACCE (Sí/No)",
     "mercado_code": "Código Mercado Comercialización",
     "mercado_name": "Mercado Comercialización",
     "mes": "Período (Mes)",

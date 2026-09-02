@@ -9,6 +9,14 @@ from models.pui_parameters import PUIParameters
 
 logger = logging.getLogger(__name__)
 
+def _asociados_acce():
+    """Códigos de agentes asociados a ACCE (import diferido para evitar ciclos)."""
+    try:
+        from config.acce import ASOCIADOS_ACCE
+        return ASOCIADOS_ACCE
+    except Exception:
+        return {}
+
 class PUIModel:
     """Modelo responsable de la extracción y agregación de datos históricos de PUI."""
 
@@ -181,6 +189,7 @@ class PUIModel:
             "agente_name": agente_name,
             "rol_pui": rol_pui,
             "cior_name": cior_name,
+            "es_asociado_acce": agente_code in _asociados_acce(),
             "total_pui_kwh": total_pui_kwh,
             "total_pui_cop": total_pui_cop,
             "total_egreso_giro_cop": total_egreso_giro_cop,

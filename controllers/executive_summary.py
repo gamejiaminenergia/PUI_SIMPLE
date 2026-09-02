@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 from config.logging_config import get_logger
+from config.acce import RESOLUCION_PUI, ARTICULO_11, ARTICULO_12, es_asociado_acce, ACCE_FULL_NAME
 
 logger = get_logger("controllers.executive_summary")
 
@@ -203,23 +204,25 @@ class ExecutiveSummaryGenerator:
         out.append("")
         out.append(f"**Fecha de generación:** {fecha}  ")
         out.append(f"**Agentes analizados:** {n} comercializadores del MEM  ")
-        out.append(f"**Marco regulatorio:** Resoluciones CREG 101/2012 y CREG 121/2016  ")
+        out.append(f"**Marco regulatorio:** {RESOLUCION_PUI} (Artículos 11 y 12)  ")
         out.append(f"**Motor de pronóstico:** Google TimesFM 3.0 (modo offline)  ")
         out.append("")
-        out.append("> Este documento resume cómo el mecanismo **PUI (Pago por Uso de Interconexión)** "
-                   "afecta al conjunto de los **comercializadores independientes** del mercado eléctrico colombiano, "
+        out.append("> Estudio encargado por la **Asociación Colombiana de Comercializadores de Energía (ACCE)** "
+                   "para evidenciar cómo el mecanismo **PUI (Prestador de Última Instancia)** afecta a sus "
+                   "asociados —los **comercializadores independientes** del mercado eléctrico colombiano— "
                    "tanto en el periodo histórico evaluado como en el horizonte de pronóstico.")
         out.append("")
         out.append("### Clasificación de los Agentes Analizados")
         out.append("")
         out.append("Los agentes incluidos en este estudio son **Comercializadores Independientes del MEM "
                    "(Mercado Eléctrico Mayorista)**, también conocidos como **CNIORs** "
-                   "(Comercializadores No Integrados al Ofrecimiento de Recursos). "
+                   "(Comercializadores No Integrados con el Operador de Red). "
                    "Estos son agentes que:")
         out.append("")
         out.append("- **No tienen generación propia** — compran toda su energía en el mercado mayorista.")
-        out.append("- Son **responsables de girar el PUI** al CIOR (ENEL Colombia S.A. E.S.P.) "
-                   "proporcional a su participación en la demanda regulada.")
+        out.append("- Son **responsables de girar el PUI** al CIOR (Comercializador Incumbente del "
+                   "Operador de Red, ENEL Colombia S.A. E.S.P.) proporcional a su participación "
+                   "en la demanda regulada.")
         out.append("- Asumen el **riesgo de incobrabilidad** del PUI: la diferencia entre lo que "
                    "giran al CIOR y lo que efectivamente recaudan de sus usuarios finales.")
         out.append("- Son los **únicos agentes del MEM que generan sobrecosto por PUI**, ya que "
@@ -318,6 +321,7 @@ class ExecutiveSummaryGenerator:
         out.append("")
         out.append("| # | Código | Nombre | Rol PUI | Sobrecosto (COP) | Flujo Neto (COP) | Recaudo (COP) | Pérdida % |")
         out.append("|---|---|---|---|---|---|---|---|")
+        n_acce_rank = 0
         for i, r in enumerate(ranking[:top_n], start=1):
             k = r["kpis"]
             nombre = k.get("agente_name", "")
@@ -326,8 +330,14 @@ class ExecutiveSummaryGenerator:
             fl = _safe(k, "flujo_neto_caja_total_cop", 0)
             re = _safe(k, "total_recaudo_cop", 0)
             pct = _safe(k, "pct_perdida_promedio", 0)
-            out.append(f"| {i} | `{r['agente']}` | {nombre} | {rol} | "
+            marca = " ★" if es_asociado_acce(r["agente"]) else ""
+            if es_asociado_acce(r["agente"]):
+                n_acce_rank += 1
+            out.append(f"| {i} | `{r['agente']}{marca}` | {nombre} | {rol} | "
                        f"**{_fmt_cop(sc)}** | {_fmt_cop(fl)} | {_fmt_cop(re)} | {pct:.2f}% |")
+        out.append("")
+        out.append("> **Nota:** el símbolo **★** identifica a los **Asociados ACCE** dentro del ranking. "
+                   f"En este listado hay **{n_acce_rank}** asociados ACCE.")
         out.append("")
         out.append("**Lectura ejecutiva:**")
         if ranking:
@@ -379,8 +389,61 @@ class ExecutiveSummaryGenerator:
                        "proyección de forecast con TimesFM. El resto se evalúa sólo con histórico.")
         out.append("")
 
-        # ---------- 6. Conclusiones ----------
-        out.append("## 6. Conclusiones Ejecutivas")
+        # ---------- 6. Esquema equitativo vs trato asimétrico (narrativa ACCE) ----------
+        out.append("## 6. Esquema Equitativo vs Trato Asimétrico (Artículos 11 y 12)")
+        out.append("")
+        out.append("El diseño transitorio de la Resolución 101 121 de 2026 genera asimetrías "
+                   "regulatorias que afectan de forma diferenciada a los CNIOR (asociados ACCE):")
+        out.append("")
+        out.append("- **Caja garantizada para el OR:** El Comercializador Incumbente del Operador de Red "
+                   "recibe los giros del PUI sí o sí (principio de caja garantizada), sin asumir pérdida "
+                   "por incobrabilidad.")
+        out.append("- **Riesgo de cartera 100% en el CNIOR:** El comercializador no integrado debe girar "
+                   "lo **facturado** aunque no lo haya **recaudado** (Artículo 12: 'pague lo facturado, "
+                   "no lo recaudado'). El faltante resultante es el sobrecosto por incobrabilidad.")
+        out.append("- **Ausencia de subsidio cruzado:** A diferencia de los grupos integrados, un CNIOR "
+                   "no cuenta con ingresos de generación o distribución para compensar el déficit de caja; "
+                   "depende enteramente del recaudo diario.")
+        out.append("")
+        out.append("> **Conclusión del cliente (ACCE):** la norma no discrimina de forma directa, pero al "
+                   "aplicar una regla homogénea ('todos pagan independientemente del recaudo') a agentes "
+                   "con condiciones heterogéneas, **asfixia financieramente al eslabón más débil** y "
+                   "favorece indirectamente a los operadores integrados, concentrando aún más el mercado.")
+        out.append("")
+
+        # ---------- 7. Comparativa transitorio vs competitivo ----------
+        out.append("## 7. Comparativa: Esquema Transitorio (Art. 11 y 12) vs Mecanismo Competitivo Definitivo")
+        out.append("")
+        out.append("El mecanismo competitivo definitivo desmonta el esquema transitorio asimétrico: el "
+                   "precio se fija por oferta ganadora en subasta, la participación es voluntaria y el "
+                   "riesgo de cartera pasa a ser un **componente remunerado** del cargo aprobado. "
+                   "El siguiente cuadro muestra cómo el faltante de caja de los CNIOR se reduce a medida "
+                   "que el esquema reconoce (remunera) la incobrabilidad en lugar de cargarla en su "
+                   "totalidad al comercializador:")
+        out.append("")
+        out.append("| Escenario | Factor Recaudo Efectivo | Faltante de caja (agregado) | % del giro al CIOR |")
+        out.append("|---|---|---|---|")
+        if tot_egreso > 0:
+            escenarios = [
+                ("Transitorio hoy (Art. 12: 'pague lo facturado, no lo recaudado')", 0.92),
+                ("Competitivo con reconocimiento parcial del riesgo", 0.95),
+                ("Competitivo con reconocimiento pleno del riesgo", 0.97),
+                ("Competitivo con riesgo 100% remunerado (neutralidad competitiva)", 1.00),
+            ]
+            for label, fac in escenarios:
+                faltante = tot_egreso * (1 - fac)
+                pct = (1 - fac) * 100.0
+                out.append(f"| {label} | {fac*100:.0f}% | **{_fmt_cop(faltante)}** | {pct:.2f}% |")
+        out.append("")
+        out.append("> **Interpretación para ACCE:** el sobrecosto por incobrabilidad **no es un costo "
+                   "inherente del servicio**, sino una consecuencia de un diseño transitorio que traslada "
+                   "todo el riesgo al CNIOR. Un mecanismo competitivo que remunere el riesgo de cartera "
+                   "reduciría el faltante agregado de forma sustancial, nivelando la cancha de juego "
+                   "frente a los operadores integrados.")
+        out.append("")
+
+        # ---------- 8. Conclusiones ----------
+        out.append("## 8. Conclusiones Ejecutivas")
         out.append("")
         out.append("1. **El PUI es financieramente deficitario en el agregado:** el mercado, "
                    "en conjunto, deja de recuperar una porción significativa del PUI facturado "
@@ -396,7 +459,7 @@ class ExecutiveSummaryGenerator:
         out.append("")
 
         # ---------- 7. Anexo: Listado completo de agentes analizados ----------
-        out.append("## 7. Anexo — Agentes Analizados (Listado Completo)")
+        out.append("## 9. Anexo — Agentes Analizados (Listado Completo)")
         out.append("")
         out.append(f"Los {n} siguientes comercializadores del MEM fueron incluidos en este análisis:")
         out.append("")
@@ -410,15 +473,21 @@ class ExecutiveSummaryGenerator:
         out.append(sep)
         for row in rows:
             padded = row + [""] * (agents_per_row - len(row))
-            out.append("| " + " | ".join(f"`{a}`" if a else "—" for a in padded) + " |")
+            out.append("| " + " | ".join(f"`{a}★`" if a and es_asociado_acce(a) else (f"`{a}`" if a else "—") for a in padded) + " |")
+        out.append("")
+        out.append("> **★** = Asociado ACCE (Comercializador Independiente afiliado a la "
+                   "Asociación Colombiana de Comercializadores de Energía).")
         out.append("")
 
         # ---------- 8. Ecuaciones y Modelo de Cálculo ----------
-        out.append("## 8. Ecuaciones y Modelo de Cálculo")
+        out.append("## 10. Ecuaciones y Modelo de Cálculo")
         out.append("")
-        out.append("> Modelo regulatorio descrito en las resoluciones **CREG 101/2012** (Esquema Transitorio) "
-                   "y **CREG 121/2016** (Esquema Competitivo). A continuación se presentan las ecuaciones "
-                   "en orden lógico de cálculo, de la demanda hasta el sobrecosto final.")
+        out.append("> Modelo regulatorio descrito en la **Resolución CREG 101 121 de 2026** "
+                   "(Artículo 11: traslado del valor del PUI a los usuarios regulados antes del "
+                   "mecanismo competitivo; Artículo 12: recaudo y liquidación del costo asumido por "
+                   "el PUI, principio de 'pague lo facturado, no lo recaudado'). "
+                   "A continuación se presentan las ecuaciones en orden lógico de cálculo, "
+                   "de la demanda hasta el sobrecosto final.")
         out.append("")
 
         out.append("### Paso 0 — Cobertura de Demanda (Contratos vs Bolsa Spot)")
@@ -479,7 +548,8 @@ class ExecutiveSummaryGenerator:
 
         out.append("### Paso 4 — Tarifas de Incobrabilidad (CRPUI / CFPUI)")
         out.append("")
-        out.append("**Esquema Transitorio** (CREG 101/2012) — aplica un cargo por riesgo de cartera:")
+        out.append("**Esquema Transitorio** (Resolución 101 121 de 2026, Artículo 12) — "
+                   "aplica un cargo por riesgo de cartera:")
         out.append("")
         out.append("```")
         out.append("CRPUI_unitario_m = (rcpui × VPUI_m-1) / (VR_m-1 × CU_m-1)   [COP/kWh]")
@@ -491,7 +561,7 @@ class ExecutiveSummaryGenerator:
         out.append("  CU_m-1 = Costo unitario rezago m-1")
         out.append("```")
         out.append("")
-        out.append("**Esquema Competitivo** (CREG 121/2016) — cargo fijo:")
+        out.append("**Esquema Competitivo** (mecanismo competitivo definitivo) — cargo fijo:")
         out.append("")
         out.append("```")
         out.append("CFPUI = $0.025 COP/kWh   (fijo, no depende de variables del mercado)")
@@ -606,34 +676,38 @@ class ExecutiveSummaryGenerator:
         out.append("")
 
         # ---------- 9. Metodología ----------
-        out.append("## 9. Metodología y Fuentes de Datos")
+        out.append("## 11. Metodología y Fuentes de Datos")
         out.append("")
         out.append("- **Datos fuente:** PostgreSQL (BD del SIN/XM), tabla `fact_hourly_*` y "
                    "dimensiones `dim_*`. Conexión verificada por logs en `logs/pui_YYYYMMDD.log`.")
         out.append("- **Pronóstico:** Google TimesFM 3.0 (modo offline, sin peticiones HTTP tras descarga inicial).")
-        out.append("- **Parámetros regulatorios:** CREG 101/2012 y CREG 121/2016.")
+        out.append("- **Parámetros regulatorios:** Resolución CREG 101 121 de 2026 (Artículos 11 y 12).")
         out.append("- **Modelo:** Arquitectura MVC en Python, principios SOLID, "
                    "logger centralizado con rotación diaria en `logs/`.")
         out.append("")
 
         # ---------- 10. Glosario de Términos ----------
-        out.append("## 10. Glosario de Términos")
+        out.append("## 12. Glosario de Términos")
         out.append("")
         out.append("> Definiciones para facilitar la comprensión del documento a auditores, "
                    "gerentes financieros y áreas comerciales.")
         out.append("")
         out.append("| Término | Sigla | Definición |")
         out.append("|---|---|---|")
-        out.append("| **PUI** | PUI | Pago por Uso de Interconexión. Cargo que los comercializadores "
-                   "deben pagar por el uso de la red de transmisión nacional. Se calcula sobre "
-                   "la demanda comercial de cada agente en áreas especiales.")
-        out.append("| **CIOR** | CIOR | Comercializador de Último Recurso Obligado a Recibir. "
+        out.append("| **PUI** | PUI | Prestador de Última Instancia. Mecanismo transitorio por el cual "
+                   "los comercializadores deben asumir la atención de usuarios huérfanos y girar "
+                   "el valor del servicio al Comercializador Incumbente del Operador de Red (CIOR) "
+                   "antes de que opere el mecanismo competitivo (Resolución 101 121 de 2026, Artículos 11 y 12).")
+        out.append("| **CIOR** | CIOR | Comercializador Incumbente del Operador de Red. "
                    "Es el agente designado para recibir los giros del PUI de parte de los CNIORs. "
                    "En este estudio, es ENEL Colombia S.A. E.S.P.")
-        out.append("| **CNIOR** | CNIOR | Comercializador Independiente No Interconectado al Ofrecimiento de Recursos. "
+        out.append("| **CNIOR** | CNIOR | Comercializador No Integrado con el Operador de Red. "
                    "Son los comercializadores puros del MEM (sin generación propia) que participan en "
                    "este estudio. Compran toda su energía en el mercado mayorista y son responsables "
                    "de girar el PUI al CIOR. Asumen el riesgo de incobrabilidad sobre los giros.")
+        out.append("| **ACCE** | ACCE | Asociación Colombiana de Comercializadores de Energía. "
+                   "Cliente del estudio; representa los intereses de los comercializadores independientes (CNIOR) "
+                   "y usa este análisis como soporte regulatorio ante la CREG.")
         out.append("| **Sobrecosto** | — | Diferencia entre el monto total que el agente debe girar al CIOR "
                    "y el monto que efectivamente logra recaudar de sus usuarios. "
                    "Representa la pérdida financiera por incobrabilidad.")
@@ -655,10 +729,12 @@ class ExecutiveSummaryGenerator:
         out.append("| **rcpui** | rcpui | Prima de riesgo de cartera. Es un cargo adicional (en COP/kWh) "
                    "que compensa el riesgo de no cobro del PUI. Por defecto: $0.030/kWh.")
         out.append("| **cfpui** | cfpui | Cargo fijo competitivo. Componente del PUI que representa "
-                   "el costo competitivo de la interconexión. Por defecto: $0.025/kWh.")
-        out.append("| **Esquema Competitivo vs Transitorio** | — | El esquema transitorio aplica "
-                   "un cargo fijo (cfpui) mientras que el competitivo calcula el cargo según "
-                   "la metodología CREG 121/2016. Por defecto: Transitorio.")
+                   "el costo de la prestación del servicio en el mecanismo competitivo definitivo. "
+                   "Por defecto: $0.025/kWh.")
+        out.append("| **Esquema Competitivo vs Transitorio** | — | El esquema transitorio (Artículos 11 y 12 de la "
+                   "Resolución 101 121 de 2026) impone tarifas reguladas ex-ante y giros obligatorios "
+                   "independientes del recaudo, mientras que el competitivo define el cargo por "
+                   "subasta de ofertas eficientes. Por defecto: Transitorio.")
         out.append("| **TimesFM** | — | Google TimesFM 3.0. Modelo de inteligencia artificial "
                    "de pronóstico de series temporales utilizado para proyectar la demanda "
                    "y cobertura de energía a futuro.")

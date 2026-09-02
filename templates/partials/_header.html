@@ -6,6 +6,9 @@
             </div>
             <div class="badges-group">
                 <span class="badge-rol badge-cnior">Rol: {{ kpis.rol_pui }}</span>
+                {% if kpis.get('es_asociado_acce') %}
+                <span class="badge-rol badge-acce">★ Asociado ACCE</span>
+                {% endif %}
                 <span class="badge-rol badge-forecast">TimesFM Daily Forecast</span>
             </div>
         </header>

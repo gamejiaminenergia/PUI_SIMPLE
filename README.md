@@ -1,6 +1,8 @@
-# Sistema MVC de Generación de Informes PUI (Pago por Uso de Interconexión & Pronóstico TimesFM)
+# Sistema MVC de Generación de Informes PUI (Prestador de Última Instancia & Pronóstico TimesFM)
 
-Sistema modular en Python basado en la arquitectura **Modelo-Vista-Controlador (MVC)** para analizar, auditar y pronosticar la consulta regulatoria del Pago por Uso de Interconexión (PUI) bajo resoluciones **CREG 101/2012** y **CREG 121/2016**.
+Sistema modular en Python basado en la arquitectura **Modelo-Vista-Controlador (MVC)** para analizar, auditar y pronosticar el impacto del mecanismo **PUI (Prestador de Última Instancia)** bajo la **Resolución CREG 101 121 de 2026** (Artículos 11 y 12).
+
+Estudio encargado por la **Asociación Colombiana de Comercializadores de Energía (ACCE)** para evidenciar el impacto negativo del esquema transitorio sobre sus asociados, los **Comercializadores No Integrados con el Operador de Red (CNIOR)**.
 
 ## 🎯 Características Principales
 
@@ -16,6 +18,7 @@ Sistema modular en Python basado en la arquitectura **Modelo-Vista-Controlador (
 - **Benchmark comparativo** de sobrecostos PUI por agente del config
 - **Sistema de logs robusto** (`logs/`) con rotación diaria y archivo de errores
 - **Salida organizada** en `output/<SIGLA>/` por agente
+- **Marca de Asociados ACCE** en reportes, ranking y datasets
 
 ## 📁 Estructura de Salidas (`output/<SIGLA>/`)
 
@@ -51,7 +54,7 @@ Cuando se procesan **2+ agentes** (con `--todos` o por defecto), el sistema gene
 - `docs/resumen_ejecutivo_pui_<TIMESTAMP>.md` — informe markdown con timestamp
 - `docs/resumen_ejecutivo_pui.md` — copia "último" estable
 
-Contiene 7 secciones: impacto agregado del PUI, cobertura global de demanda (contratos vs bolsa), top 10 agentes por sobrecosto, distribución de pérdida por incobrabilidad, cobertura histórico/forecast, conclusiones ejecutivas y metodología. **Listo para compartir con el cliente.**
+Contiene: impacto agregado del PUI, cobertura global de demanda (contratos vs bolsa), ranking completo de agentes por sobrecosto con marca de Asociados ACCE, distribución de pérdida por incobrabilidad, narrativa de asimetría regulatoria (Artículos 11 y 12), comparativa transitorio vs mecanismo competitivo, cobertura histórico/forecast, conclusiones ejecutivas y metodología. **Listo para compartir con el cliente (ACCE).**
 
 ## 🚀 Uso Rápido (CLI)
 
@@ -135,7 +138,7 @@ model:
   context_len: 512
   horizon_len: 185
 
-# Parámetros regulatorios PUI (CREG 101/2012)
+# Parámetros regulatorios PUI (Res. 101 121 de 2026)
 pui_params:
   rcpui: 0.03                    # $/kWh - Prima riesgo cartera CIOR
   pct_areas_especiales: 0.10     # 10% VR en áreas especiales
@@ -277,7 +280,7 @@ python3 main.py --agente ETTC --log-level DEBUG --format html
 - **Google TimesFM** - Modelo de pronóstico de series temporales
 - **Chart.js** - Gráficas interactivas
 - **MathJax** - Renderizado de fórmulas LaTeX
-- **CREG 101/2012 & 121/2016** - Marco regulatorio colombiano PUI
+- **Resolución CREG 101 121 de 2026** - Marco regulatorio colombiano PUI (Artículos 11 y 12)
 
 ---
 

@@ -18,7 +18,7 @@ log = get_logger("main")
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sistema MVC de Generación de Informes PUI (Pago por Uso de Interconexión - Histórico & Pronóstico TimesFM)"
+        description="Sistema MVC de Generación de Informes PUI (Prestador de Última Instancia - Res. CREG 101 121 de 2026 - Histórico & Pronóstico TimesFM)"
     )
 
     parser.add_argument("--config", type=str, default="config/params.yaml", help="Ruta al archivo YAML de configuración")

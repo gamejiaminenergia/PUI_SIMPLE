@@ -44,7 +44,8 @@ class ConsoleReportView(BaseReportView):
         print(f" {'MERCADO':<20} | {'EGRESO GIRO (COP)':<22} | {'SOBRECOSTO (COP)':<20}")
         print("-" * 80)
         for m in kpis['top_mercados_sobrecosto'][:5]:
-            print(f" {m['name'][:20]:<20} | ${m['egreso']:>20,.2f} | ${m['sobrecosto']:>18,.2f}")
+            m_name = (m.get('name') or m.get('code') or 'N/A')[:20]
+            print(f" {m_name:<20} | ${m['egreso']:>20,.2f} | ${m['sobrecosto']:>18,.2f}")
         print("=" * 80 + "\n")
 
         return "console_output_rendered"

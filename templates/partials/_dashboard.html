@@ -30,6 +30,14 @@
                     <label>CIOR del Sistema</label>
                     <span>{{ kpis.cior_name }}</span>
                 </div>
+                <div class="param-item">
+                    <label>Asociado ACCE</label>
+                    {% if kpis.get('es_asociado_acce') %}
+                    <span class="text-emerald">★ Sí — Comercializador Independiente afiliado</span>
+                    {% else %}
+                    <span class="text-amber">No</span>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- KPI Grid -->
@@ -108,7 +116,7 @@
                         </div>
                     </div>
                     <p class="chart-explanation">
-                        <strong>¿Qué muestra esta gráfica?</strong> El <strong>PUI</strong> (Pago por Uso de Interconexión) es un mecanismo por el cual algunos comercializadores recogen dinero de sus clientes para <strong>compensar a la red de transporte</strong> por la energía que circula en zonas de difícil acceso. Las barras púrpuras son el valor de esa asignación, y las líneas muestran lo que el agente está <strong>obligado a girar</strong> al operador (rojo) frente a lo que <strong>efectivamente logra recaudar</strong> de sus clientes (verde). Cuando la línea verde está debajo de la roja, el agente recauda menos de lo que debe girar, generando un faltante de caja.
+                        <strong>¿Qué muestra esta gráfica?</strong> El <strong>PUI (Prestador de Última Instancia)</strong> es un mecanismo transitorio (Resolución 101 121 de 2026) por el cual los comercializadores no integrados (CNIOR) deben asumir la atención de usuarios huérfanos y <strong>girar el valor al Comercializador Incumbente del Operador de Red</strong> (CIOR). Las barras púrpuras son el valor de esa asignación, y las líneas muestran lo que el agente está <strong>obligado a girar</strong> al CIOR (rojo) frente a lo que <strong>efectivamente logra recaudar</strong> de sus clientes (verde). Cuando la línea verde está debajo de la roja, el agente recauda menos de lo que debe girar —por el principio del Artículo 12, 'pague lo facturado, no lo recaudado'— generando un faltante de caja que financia con recursos propios.
                     </p>
                     <div class="chart-wrapper">
                         <canvas id="chartPuiAndCashFlow"></canvas>
